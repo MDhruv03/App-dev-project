@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardElevation="2dp"
+    app:cardCornerRadius="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tv_question_number"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/ic_launcher_background"
+            android:gravity="center"
+            android:text="Q1"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnPrimary"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_question"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="What is polymorphism?"
+                android:textSize="15sp"
+                android:textColor="?attr/colorOnSurface"
+                android:maxLines="2"
+                android:ellipsize="end"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_topic"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="OOP"
+                    android:textSize="11sp"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_difficulty"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Medium"
+                    android:textSize="11sp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

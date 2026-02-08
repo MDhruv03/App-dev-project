@@ -9,14 +9,22 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.myapplication.R;
+import com.example.myapplication.viewmodel.AnalyticsViewModel;
 
 public class AnalyticsFragment extends Fragment {
     
     private TextView tvTotalApplications;
     private TextView tvInterviewsScheduled;
     private TextView tvSuccessRate;
+    private TextView tvOffersReceived;
+    private TextView tvInterviewReadiness;
+    private TextView tvPracticeAttempts;
+    private TextView tvAverageScore;
+    
+    private AnalyticsViewModel viewModel;
     
     @Nullable
     @Override
@@ -30,16 +38,70 @@ public class AnalyticsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         
         initializeViews(view);
-        loadAnalytics();
+        setupViewModel();
+        
+        viewModel.loadAnalytics();
     }
     
     private void initializeViews(View view) {
         tvTotalApplications = view.findViewById(R.id.tv_total_applications);
         tvInterviewsScheduled = view.findViewById(R.id.tv_interviews_scheduled);
         tvSuccessRate = view.findViewById(R.id.tv_success_rate);
+        tvOffersReceived = view.findViewById(R.id.tv_offers_received);
+        tvInterviewReadiness = view.findViewById(R.id.tv_interview_readiness);
+        tvPracticeAttempts = view.findViewById(R.id.tv_practice_attempts);
+        tvAverageScore = view.findViewById(R.id.tv_average_score);
     }
     
-    private void loadAnalytics() {
-        // TODO: Load analytics data
+    private void setupViewModel() {
+        viewModel = new ViewModelProvider(this).get(AnalyticsViewModel.class);
+        
+        viewModel.getTotalApplications().observe(getViewLifecycleOwner(), count -> {
+            if (count != null && tvTotalApplications != null) {
+                tvTotalApplications.setText(String.valueOf(count));
+            }
+        });
+        
+        viewModel.getInterviewsScheduled().observe(getViewLifecycleOwner(), count -> {
+            if (count != null && tvInterviewsScheduled != null) {
+                tvInterviewsScheduled.setText(String.valueOf(count));
+            }
+        });
+        
+        viewModel.getSuccessRate().observe(getViewLifecycleOwner(), rate -> {
+            if (rate != null && tvSuccessRate != null) {
+                tvSuccessRate.setText(String.format("%.1f%%", rate));
+            }
+        });
+        
+        viewModel.getOffersReceived().observe(getViewLifecycleOwner(), count -> {
+            if (count != null && tvOffersReceived != null) {
+                tvOffersReceived.setText(String.valueOf(count));
+            }
+        });
+        
+        viewModel.getInterviewReadiness().observe(getViewLifecycleOwner(), score -> {
+            if (score != null && tvInterviewReadiness != null) {
+                tvInterviewReadiness.setText(String.format("%.0f%%", score));
+            }
+        });
+        
+        viewModel.getPracticeAttempts().observe(getViewLifecycleOwner(), count -> {
+            if (count != null && tvPracticeAttempts != null) {
+                tvPracticeAttempts.setText(String.valueOf(count));
+            }
+        });
+        
+        viewModel.getAverageInterviewScore().observe(getViewLifecycleOwner(), score -> {
+            if (score != null && tvAverageScore != null) {
+                tvAverageScore.setText(String.format("%.1f/100", score));
+            }
+        });
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        viewModel.loadAnalytics();
     }
 }

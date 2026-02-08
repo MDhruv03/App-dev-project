@@ -49,5 +49,16 @@
     
     <!-- Card & Elevation -->
     <color name="card_background">#FFFFFF</color>
-    <color name="shadow">#1A000000</color>
-</resources>
+    <color name="shadow">#1A000000</color>    
+    <!-- Application Status Chip Colors -->
+    <color name="chip_saved">#60A5FA</color>
+    <color name="chip_applied">#A78BFA</color>
+    <color name="chip_interview">#F59E0B</color>
+    <color name="chip_rejected">#EF4444</color>
+    <color name="chip_accepted">#10B981</color>
+    <color name="chip_default">#9CA3AF</color>
+    
+    <!-- Difficulty Colors -->
+    <color name="difficulty_easy">#10B981</color>
+    <color name="difficulty_medium">#F59E0B</color>
+    <color name="difficulty_hard">#EF4444</color></resources>

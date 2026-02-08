@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -16,13 +17,17 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.myapplication.R;
 import com.example.myapplication.adapter.OpportunityAdapter;
 import com.example.myapplication.adapter.OpportunityHorizontalAdapter;
+import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.model.Opportunity;
+import com.example.myapplication.util.InterviewDataGenerator;
 import com.example.myapplication.util.SampleDataGenerator;
+import com.example.myapplication.viewmodel.OpportunityViewModel;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.search.SearchBar;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
     
@@ -34,8 +39,7 @@ public class HomeFragment extends Fragment {
     
     private OpportunityHorizontalAdapter recommendedAdapter;
     private OpportunityAdapter allOpportunitiesAdapter;
-    
-    private List<Opportunity> allOpportunities;
+    private OpportunityViewModel viewModel;
     
     @Nullable
     @Override
@@ -49,10 +53,16 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         
         initializeViews(view);
+        setupViewModel();
         setupRecyclerViews();
         setupSwipeRefresh();
         setupFilters();
-        loadOpportunities();
+        
+        // Initialize database with sample data on first run
+        initializeDatabaseIfNeeded();
+        
+        viewModel.loadAllOpportunities();
+        viewModel.loadRecommendedOpportunities();
     }
     
     private void initializeViews(View view) {
@@ -63,6 +73,28 @@ public class HomeFragment extends Fragment {
         recyclerViewAll = view.findViewById(R.id.recycler_all);
     }
     
+    private void setupViewModel() {
+        viewModel = new ViewModelProvider(this).get(OpportunityViewModel.class);
+        
+        viewModel.getRecommendedOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
+            if (opportunities != null) {
+                recommendedAdapter.setOpportunities(opportunities);
+            }
+        });
+        
+        viewModel.getFilteredOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
+            if (opportunities != null) {
+                allOpportunitiesAdapter.setOpportunities(opportunities);
+            }
+        });
+        
+        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            if (isLoading != null) {
+                swipeRefreshLayout.setRefreshing(isLoading);
+            }
+        });
+    }
+    
     private void setupRecyclerViews() {
         // Recommended opportunities (horizontal)
         recyclerViewRecommended.setLayoutManager(
@@ -71,7 +103,7 @@ public class HomeFragment extends Fragment {
         recommendedAdapter = new OpportunityHorizontalAdapter();
         recommendedAdapter.setOnOpportunityClickListener(opportunity -> {
             Toast.makeText(requireContext(), 
-                "Viewing details for " + opportunity.getTitle(), 
+                "Viewing " + opportunity.getTitle() + " at " + opportunity.getCompany(), 
                 Toast.LENGTH_SHORT).show();
         });
         recyclerViewRecommended.setAdapter(recommendedAdapter);
@@ -90,21 +122,21 @@ public class HomeFragment extends Fragment {
                 Toast.makeText(requireContext(), 
                     "Opening application for " + opportunity.getCompany(), 
                     Toast.LENGTH_SHORT).show();
+                viewModel.markAsApplied(opportunity);
             }
             
             @Override
             public void onSaveClick(Opportunity opportunity) {
-                opportunity.setSaved(!opportunity.isSaved());
-                Toast.makeText(requireContext(), 
-                    opportunity.isSaved() ? "Saved!" : "Removed from saved", 
-                    Toast.LENGTH_SHORT).show();
+                viewModel.toggleSaveStatus(opportunity);
+                String message = opportunity.isSaved() ? "Saved!" : "Removed from saved";
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
             
             @Override
             public void onOpportunityClick(Opportunity opportunity) {
                 Toast.makeText(requireContext(), 
-                    "Viewing details for " + opportunity.getTitle(), 
-                    Toast.LENGTH_SHORT).show();
+                    opportunity.getTitle() + " at " + opportunity.getCompany(),
+                    Toast.LENGTH_LONG).show();
             }
         };
     }
@@ -112,23 +144,58 @@ public class HomeFragment extends Fragment {
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setColorSchemeResources(R.color.primary);
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            loadOpportunities();
-            swipeRefreshLayout.setRefreshing(false);
+            viewModel.loadAllOpportunities();
+            viewModel.loadRecommendedOpportunities();
         });
     }
     
     private void setupFilters() {
         filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            // Filter logic will be implemented when connected to ViewModel
+            if (checkedIds.isEmpty()) {
+                viewModel.filterByType("all");
+                return;
+            }
+            
+            int checkedId = checkedIds.get(0);
+            Chip chip = group.findViewById(checkedId);
+            if (chip != null) {
+                String filter = chip.getText().toString().toLowerCase();
+                viewModel.filterByType(filter);
+            }
         });
     }
     
-    private void loadOpportunities() {
-        // Load sample data
-        List<Opportunity> recommended = SampleDataGenerator.getRecommendedOpportunities();
-        allOpportunities = SampleDataGenerator.getAllOpportunities();
-        
-        recommendedAdapter.setOpportunities(recommended);
-        allOpportunitiesAdapter.setOpportunities(allOpportunities);
+    private void initializeDatabaseIfNeeded() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            AppDatabase db = AppDatabase.getInstance(requireContext());
+            
+            // Check if database has data
+            List<Opportunity> existingOpportunities = db.opportunityDao().getAllOpportunities();
+            
+            if (existingOpportunities.isEmpty()) {
+                // Add sample opportunities
+                List<Opportunity> sampleOpportunities = SampleDataGenerator.generateOpportunities(30);
+                for (Opportunity opportunity : sampleOpportunities) {
+                    db.opportunityDao().insert(opportunity);
+                }
+                
+                // Add sample interview questions
+                String[] domains = {"SDE", "ML", "WEB", "ANDROID", "HR"};
+                for (String domain : domains) {
+                    List<com.example.myapplication.model.InterviewQuestion> questions = 
+                        InterviewDataGenerator.generateQuestionsForDomain(domain);
+                    for (com.example.myapplication.model.InterviewQuestion question : questions) {
+                        db.interviewQuestionDao().insert(question);
+                    }
+                }
+                
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Database initialized with sample data!", 
+                        Toast.LENGTH_SHORT).show();
+                    viewModel.loadAllOpportunities();
+                    viewModel.loadRecommendedOpportunities();
+                });
+            }
+        });
     }
 }

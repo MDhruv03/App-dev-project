@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardElevation="2dp"
+    app:cardCornerRadius="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_opportunity_id"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Application #1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="APPLIED"
+                android:textSize="12sp"
+                app:chipBackgroundColor="@color/chip_applied"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Application submitted"
+            android:textSize="14sp"
+            android:textColor="?attr/colorOnSurfaceVariant"/>
+
+        <TextView
+            android:id="@+id/tv_applied_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Applied: Jan 15, 2026"
+            android:textSize="13sp"
+            android:textColor="?attr/colorOnSurfaceVariant"/>
+
+        <TextView
+            android:id="@+id/tv_interview_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Interview: Jan 25, 2026"
+            android:textSize="13sp"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/tv_notes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Notes go here"
+            android:textSize="13sp"
+            android:textStyle="italic"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
