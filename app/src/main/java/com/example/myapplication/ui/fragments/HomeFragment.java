@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,9 +14,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.myapplication.R;
+import com.example.myapplication.adapter.OpportunityAdapter;
+import com.example.myapplication.adapter.OpportunityHorizontalAdapter;
+import com.example.myapplication.model.Opportunity;
+import com.example.myapplication.util.SampleDataGenerator;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.search.SearchBar;
+
+import java.util.List;
 
 public class HomeFragment extends Fragment {
     
@@ -24,6 +31,11 @@ public class HomeFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerViewRecommended;
     private RecyclerView recyclerViewAll;
+    
+    private OpportunityHorizontalAdapter recommendedAdapter;
+    private OpportunityAdapter allOpportunitiesAdapter;
+    
+    private List<Opportunity> allOpportunities;
     
     @Nullable
     @Override
@@ -40,6 +52,7 @@ public class HomeFragment extends Fragment {
         setupRecyclerViews();
         setupSwipeRefresh();
         setupFilters();
+        loadOpportunities();
     }
     
     private void initializeViews(View view) {
@@ -51,24 +64,71 @@ public class HomeFragment extends Fragment {
     }
     
     private void setupRecyclerViews() {
+        // Recommended opportunities (horizontal)
         recyclerViewRecommended.setLayoutManager(
             new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         );
+        recommendedAdapter = new OpportunityHorizontalAdapter();
+        recommendedAdapter.setOnOpportunityClickListener(opportunity -> {
+            Toast.makeText(requireContext(), 
+                "Viewing details for " + opportunity.getTitle(), 
+                Toast.LENGTH_SHORT).show();
+        });
+        recyclerViewRecommended.setAdapter(recommendedAdapter);
         
+        // All opportunities (vertical)
         recyclerViewAll.setLayoutManager(new LinearLayoutManager(requireContext()));
-        
-        // TODO: Set adapters
+        allOpportunitiesAdapter = new OpportunityAdapter();
+        allOpportunitiesAdapter.setOnOpportunityClickListener(createOpportunityListener());
+        recyclerViewAll.setAdapter(allOpportunitiesAdapter);
+    }
+    
+    private OpportunityAdapter.OnOpportunityClickListener createOpportunityListener() {
+        return new OpportunityAdapter.OnOpportunityClickListener() {
+            @Override
+            public void onApplyClick(Opportunity opportunity) {
+                Toast.makeText(requireContext(), 
+                    "Opening application for " + opportunity.getCompany(), 
+                    Toast.LENGTH_SHORT).show();
+            }
+            
+            @Override
+            public void onSaveClick(Opportunity opportunity) {
+                opportunity.setSaved(!opportunity.isSaved());
+                Toast.makeText(requireContext(), 
+                    opportunity.isSaved() ? "Saved!" : "Removed from saved", 
+                    Toast.LENGTH_SHORT).show();
+            }
+            
+            @Override
+            public void onOpportunityClick(Opportunity opportunity) {
+                Toast.makeText(requireContext(), 
+                    "Viewing details for " + opportunity.getTitle(), 
+                    Toast.LENGTH_SHORT).show();
+            }
+        };
     }
     
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setColorSchemeResources(R.color.primary);
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            // TODO: Refresh opportunities
+            loadOpportunities();
             swipeRefreshLayout.setRefreshing(false);
         });
     }
     
     private void setupFilters() {
-        // Filter chips will be populated dynamically
+        filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            // Filter logic will be implemented when connected to ViewModel
+        });
+    }
+    
+    private void loadOpportunities() {
+        // Load sample data
+        List<Opportunity> recommended = SampleDataGenerator.getRecommendedOpportunities();
+        allOpportunities = SampleDataGenerator.getAllOpportunities();
+        
+        recommendedAdapter.setOpportunities(recommended);
+        allOpportunitiesAdapter.setOpportunities(allOpportunities);
     }
 }
