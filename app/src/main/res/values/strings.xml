@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">OpportunityHub</string>
+    
+    <!-- Bottom Navigation -->
+    <string name="home">Home</string>
+    <string name="saved">Saved</string>
+    <string name="tracker">Tracker</string>
+    <string name="ai_interview">AI Interview</string>
+    <string name="analytics">Analytics</string>
+    
+    <!-- Common -->
+    <string name="profile">Profile</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="apply">Apply</string>
+    <string name="save">Save</string>
+    <string name="share">Share</string>
+    
+    <!-- Opportunity Types -->
+    <string name="internship">Internship</string>
+    <string name="job">Job</string>
+    <string name="hackathon">Hackathon</string>
+    
+    <!-- Filters -->
+    <string name="remote">Remote</string>
+    <string name="onsite">Onsite</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="paid">Paid</string>
+    <string name="unpaid">Unpaid</string>
+    
+    <!-- Application Status -->
+    <string name="applied">Applied</string>
+    <string name="interview">Interview</string>
+    <string name="rejected">Rejected</string>
+    <string name="accepted">Accepted</string>
+    
+    <!-- Placeholders -->
+    <string name="search_opportunities">Search opportunities...</string>
+    <string name="no_opportunities">No opportunities found</string>
+    <string name="loading">Loading...</string>
+    
+    <!-- Recommendations -->
+    <string name="recommended_for_you">Recommended for You</string>
+    <string name="match">Match</string>
+    <string name="deadline">Deadline</string>
+    
+    <!-- Profile -->
+    <string name="edit_profile">Edit Profile</string>
+    <string name="preferences">Preferences</string>
+    <string name="resume">Resume</string>
+    <string name="skills">Skills</string>
+    
+    <!-- AI Interview -->
+    <string name="start_interview">Start Interview</string>
+    <string name="select_domain">Select Domain</string>
+    <string name="your_answer">Your Answer</string>
+    <string name="submit_answer">Submit Answer</string>
+    <string name="feedback">Feedback</string>
+    <string name="score">Score</string>
+    
+    <!-- Analytics -->
+    <string name="total_applications">Total Applications</string>
+    <string name="interviews_scheduled">Interviews Scheduled</string>
+    <string name="success_rate">Success Rate</string>
+</resources>

@@ -1,0 +1,299 @@
+📱 Internship, Job & Hackathon Finder
+With Smart Recommendations, Application Tracker & AI Interviewer
+📌 Project Overview
+
+The Internship, Job & Hackathon Finder is a feature-rich Android application designed to help students and early professionals discover, filter, track, and prepare for opportunities in one centralized platform.
+
+Unlike traditional listing apps, this system also includes:
+
+✔ A multi-factor recommendation engine
+✔ A resume-based skill matcher
+✔ A smart notification system
+✔ An application analytics dashboard
+✔ An AI Interview Preparation Module
+
+This project demonstrates real-world mobile product design using Android development best practices and intelligent features that simulate industry-level applications.
+
+🎯 Problem Statement
+
+Students face the following challenges:
+
+Opportunities are scattered across many platforms
+
+No centralized tracking of applications
+
+Deadlines are often missed
+
+Hard to identify relevant roles based on skills
+
+No system to prepare for interviews inside the same platform
+
+This application provides a centralized discovery + preparation ecosystem.
+
+🧠 Core Features
+👤 User Profile & Preferences
+
+Register/Login (Firebase or local)
+
+Add skills with proficiency level
+
+Set preferred roles, locations, and job type
+
+Upload resume (PDF/DOCX)
+
+🔍 Unified Opportunity Feed
+
+Internships, Jobs, Hackathons in one feed
+
+Pull-to-refresh
+
+Search by role/company/skills
+
+Filter by:
+
+Role
+
+Location
+
+Paid/Unpaid
+
+Remote/Onsite
+
+Deadline
+
+⭐ Smart Recommendation Engine
+
+Each opportunity is ranked using:
+
+Factor	Score
+Role Match	+3
+Location Match	+2
+Paid Preference	+2
+Skill Match	+1 per skill
+Resume Skill Match	Bonus
+Deadline Proximity	Higher priority
+Popularity (Mock Trending Score)	Bonus
+
+Users see a “Recommended for You” section sorted by this score.
+
+📄 Resume Skill Extraction
+
+Resume text is parsed
+
+Keywords matched with opportunity skills
+
+Shows Match % indicator
+
+Adds extra weight to recommendation score
+
+💾 Save & Application Tracker
+
+Users can:
+
+Save opportunities
+
+Track status: Applied, Interview, Rejected, Accepted
+
+Add interview notes
+
+Set interview reminders
+
+📊 Application Analytics Dashboard
+
+Pie chart of application statuses
+
+Total applied vs interviews
+
+Success ratio
+
+🔔 Smart Notifications (Background Services)
+
+Using WorkManager:
+
+Daily recommended opportunities
+
+Deadline reminders
+
+Interview reminders
+
+New hackathon alerts based on skills
+
+🤖 AI Interviewer Module (Major Differentiator)
+
+A built-in AI-powered interview preparation assistant.
+
+Features
+🎤 Mock Interview Generator
+
+Select domain (SDE / ML / Web / Android / HR)
+
+App generates role-specific questions
+
+🧠 Answer Evaluation System
+
+User types answer → App:
+
+Checks keyword presence
+
+Evaluates answer completeness
+
+Provides feedback like:
+
+“Explain time complexity”
+
+“Add real-world example”
+
+📈 Interview Readiness Score
+
+Tracks:
+
+Questions attempted
+
+Accuracy score
+
+Weak topic detection
+
+📚 Topic-Based Practice
+
+DSA
+
+OOPS
+
+DBMS
+
+System Design
+
+Behavioral Questions
+
+🏗 System Architecture
+
+App follows MVVM Architecture
+
+com.opportunityfinder
+│
+├── model        → Data classes
+├── network      → API services
+├── database     → SQLite / Room
+├── repository   → Data management
+├── ui           → Activities, Fragments
+├── viewmodel    → Business logic
+└── ai           → Interview evaluator logic
+
+🛠 Technologies Used
+Component	Technology
+IDE	Android Studio
+Language	Java
+Build System	Gradle (Groovy)
+UI	XML, RecyclerView, Fragments
+Networking	Retrofit
+Database	SQLite / Room
+Storage	SharedPreferences
+Background Tasks	WorkManager
+Charts	MPAndroidChart
+Authentication	Firebase (optional)
+🚀 Copilot Development Roadmap
+
+This roadmap shows how GitHub Copilot accelerates development phase by phase.
+
+🧩 Phase 1 — Project Setup
+
+Copilot helps generate:
+
+MVVM package structure
+
+Basic Activities & Fragments
+
+Bottom Navigation setup
+
+🌐 Phase 2 — Data Layer
+
+Use Copilot to create:
+
+Internship model classes
+
+Retrofit API interfaces
+
+JSON parsing logic
+
+Repository pattern
+
+🧠 Phase 3 — Recommendation Engine
+
+Prompt Copilot to:
+
+Write scoring function
+
+Implement sorting algorithm
+
+Add resume-skill weighting logic
+
+📄 Phase 4 — Resume Parser
+
+Copilot generates:
+
+File picker code
+
+PDF text extraction logic
+
+Skill keyword matching
+
+💾 Phase 5 — Database & Tracker
+
+Use Copilot for:
+
+SQLite helper class
+
+CRUD methods
+
+Application status update logic
+
+🔔 Phase 6 — Notifications
+
+Copilot helps write:
+
+WorkManager worker classes
+
+Notification builder logic
+
+Reminder scheduling
+
+📊 Phase 7 — Analytics Dashboard
+
+Copilot can generate:
+
+Pie chart setup
+
+Data aggregation queries
+
+Stats calculation methods
+
+🤖 Phase 8 — AI Interviewer
+
+Copilot assists with:
+
+Question bank structure
+
+Answer scoring algorithm
+
+Feedback generation rules
+
+Progress tracking system
+
+🎓 Academic Value
+
+This project demonstrates:
+
+✔ API Integration
+✔ Database Management
+✔ Background Processing
+✔ Recommendation Algorithms
+✔ Resume Parsing
+✔ Data Visualization
+✔ AI-based Interview Simulation
+✔ MVVM Architecture
+
+🏁 Conclusion
+
+The Internship, Job & Hackathon Finder with AI Interviewer is a comprehensive Android application that not only helps users discover and track opportunities but also prepares them for interviews — making it a career companion app rather than just a listing platform.
+
+This combination of intelligent features, system architecture, and real-world usability makes it a high-impact academic project with strong practical relevance.
