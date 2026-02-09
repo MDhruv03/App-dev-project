@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,7 @@ import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
     
+    private static final String TAG = "HomeFragment";
     private SearchBar searchBar;
     private ChipGroup filterChipGroup;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -45,24 +47,40 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        Log.d(TAG, "onCreateView called");
+        try {
+            View view = inflater.inflate(R.layout.fragment_home, container, false);
+            Log.d(TAG, "Layout inflated successfully");
+            return view;
+        } catch (Exception e) {
+            Log.e(TAG, "Error inflating layout", e);
+            Toast.makeText(requireContext(), "Error loading home: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        }
     }
     
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        Log.d(TAG, "onViewCreated called");
         
-        initializeViews(view);
-        setupViewModel();
-        setupRecyclerViews();
-        setupSwipeRefresh();
-        setupFilters();
-        
-        // Initialize database with sample data on first run
-        initializeDatabaseIfNeeded();
-        
-        viewModel.loadAllOpportunities();
-        viewModel.loadRecommendedOpportunities();
+        try {
+            initializeViews(view);
+            setupViewModel();
+            setupRecyclerViews();
+            setupSwipeRefresh();
+            setupFilters();
+            
+            // Initialize database with sample data on first run
+            initializeDatabaseIfNeeded();
+            
+            viewModel.loadAllOpportunities();
+            viewModel.loadRecommendedOpportunities();
+            Log.d(TAG, "View setup completed successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onViewCreated", e);
+            Toast.makeText(requireContext(), "Error setting up home: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
     
     private void initializeViews(View view) {
