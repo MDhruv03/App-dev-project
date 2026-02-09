@@ -65,17 +65,17 @@ public class AIInterviewFragment extends Fragment {
     private void setupViewModel() {
         viewModel = new ViewModelProvider(this).get(InterviewViewModel.class);
         
-        viewModel.getInterviewAttempts().observe(getViewLifecycleOwner(), attempts -> {
-            tvTotalAttempts.setText(String.valueOf(attempts != null ? attempts.size() : 0));
+        viewModel.getUserProgress().observe(getViewLifecycleOwner(), progress -> {
+            tvTotalAttempts.setText(String.valueOf(progress != null ? progress.size() : 0));
             
-            if (attempts != null && !attempts.isEmpty()) {
-                double avgScore = attempts.stream()
-                    .mapToDouble(a -> a.getScore())
+            if (progress != null && !progress.isEmpty()) {
+                double avgScore = progress.stream()
+                    .mapToDouble(p -> p.getScore())
                     .average()
                     .orElse(0.0);
                 tvAverageScore.setText(String.format("%.1f", avgScore));
                 
-                int readiness = calculateReadinessScore(attempts.size(), avgScore);
+                int readiness = calculateReadinessScore(progress.size(), avgScore);
                 tvReadinessScore.setText(readiness + "%");
             } else {
                 tvAverageScore.setText("0.0");
@@ -83,7 +83,7 @@ public class AIInterviewFragment extends Fragment {
             }
         });
         
-        viewModel.getQuestionsByDomain().observe(getViewLifecycleOwner(), questions -> {
+        viewModel.getQuestions().observe(getViewLifecycleOwner(), questions -> {
             if (questions != null) {
                 adapter.setQuestions(questions);
             }
@@ -127,13 +127,13 @@ public class AIInterviewFragment extends Fragment {
     }
     
     private void loadInitialData() {
-        viewModel.loadInterviewAttempts();
+        viewModel.loadUserProgress();
+        viewModel.loadUserStatistics();
         loadQuestionsForDomain(selectedDomain);
     }
     
     private void loadQuestionsForDomain(String domain) {
-        List<InterviewQuestion> questions = InterviewDataGenerator.generateQuestionsForDomain(domain);
-        adapter.setQuestions(questions);
+        viewModel.loadQuestionsByDomain(domain);
     }
     
     private int calculateReadinessScore(int attempts, double avgScore) {

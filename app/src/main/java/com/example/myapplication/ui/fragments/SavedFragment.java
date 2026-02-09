@@ -72,10 +72,8 @@ public class SavedFragment extends Fragment {
                 Toast.makeText(requireContext(), "Applied to " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
             }
             
-            @Override
             public void onSaveClick(Opportunity opportunity) {
-                opportunity.setSaved(false);
-                viewModel.updateOpportunity(opportunity);
+                viewModel.toggleSaveStatus(opportunity);
                 Toast.makeText(requireContext(), "Removed from saved", Toast.LENGTH_SHORT).show();
             }
         });
@@ -92,7 +90,8 @@ public class SavedFragment extends Fragment {
                     type = chip.getText().toString().toLowerCase();
                 }
             }
-            viewModel.filterSavedByType(type);
+            viewModel.filterByType(type);
+            viewModel.loadSavedOpportunities();
         });
     }
 }

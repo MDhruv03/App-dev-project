@@ -148,12 +148,18 @@ public class HomeFragment extends Fragment {
     
     private void initializeDatabaseIfNeeded() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            AppDatabase db = AppDatabase.getInstance(requireContext());
-            List<Opportunity> existing = db.opportunityDao().getAllOpportunitiesSync();
-            
-            if (existing == null || existing.isEmpty()) {
-                List<Opportunity> sampleData = SampleDataGenerator.generateOpportunities();
-                db.opportunityDao().insertAll(sampleData);
+            try {
+                AppDatabase db = AppDatabase.getInstance(requireContext());
+                List<Opportunity> existing = db.opportunityDao().getAllOpportunities();
+                
+                if (existing == null || existing.isEmpty()) {
+                    List<Opportunity> sampleData = SampleDataGenerator.generateOpportunities(20);
+                    for (Opportunity opp : sampleData) {
+                        db.opportunityDao().insert(opp);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -167,8 +173,7 @@ public class HomeFragment extends Fragment {
     }
     
     private void saveOpportunity(Opportunity opportunity) {
-        opportunity.setSaved(!opportunity.isSaved());
-        viewModel.updateOpportunity(opportunity);
+        viewModel.toggleSaveStatus(opportunity);
         Toast.makeText(requireContext(), opportunity.isSaved() ? "Saved!" : "Unsaved", Toast.LENGTH_SHORT).show();
     }
 }

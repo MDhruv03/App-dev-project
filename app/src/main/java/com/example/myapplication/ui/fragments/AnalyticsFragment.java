@@ -68,9 +68,9 @@ public class AnalyticsFragment extends Fragment {
         });
         
         // Observe interview data
-        interviewViewModel.getInterviewAttempts().observe(getViewLifecycleOwner(), attempts -> {
-            if (attempts != null) {
-                updateInterviewStats(attempts);
+        interviewViewModel.getUserProgress().observe(getViewLifecycleOwner(), progress -> {
+            if (progress != null) {
+                updateInterviewStats(progress);
             }
         });
         
@@ -84,8 +84,9 @@ public class AnalyticsFragment extends Fragment {
     
     private void loadAnalyticsData() {
         applicationViewModel.loadAllApplications();
-        interviewViewModel.loadInterviewAttempts();
-        analyticsViewModel.calculateSuccessRate();
+        interviewViewModel.loadUserProgress();
+        interviewViewModel.loadUserStatistics();
+        analyticsViewModel.loadAnalytics();
     }
     
     private void updateApplicationStats(List<Application> applications) {
