@@ -23,6 +23,7 @@
     <color name="surface_variant">#F3F4F6</color>
     <color name="outline">#E5E7EB</color>
     <color name="outline_variant">#F3F4F6</color>
+    <color name="divider">#E5E7EB</color>
     
     <!-- Text Colors -->
     <color name="on_primary">#FFFFFF</color>
