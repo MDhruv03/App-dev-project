@@ -1,51 +1,40 @@
 package com.example.myapplication.ui.fragments;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.myapplication.R;
-import com.example.myapplication.adapter.OpportunityAdapter;
-import com.example.myapplication.model.Opportunity;
-import com.example.myapplication.viewmodel.OpportunityViewModel;
-import com.google.android.material.chip.ChipGroup;
 
 public class SavedFragment extends Fragment {
-    
-    private ChipGroup filterChipGroup;
-    private RecyclerView recyclerViewSaved;
-    
-    private OpportunityViewModel viewModel;
-    private OpportunityAdapter adapter;
     
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_saved, container, false);
-    }
-    
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setBackgroundColor(Color.WHITE);
+        layout.setPadding(48, 48, 48, 48);
         
-        initializeViews(view);
-        setupViewModel();
-        setupRecyclerView();
+        TextView tv = new TextView(requireContext());
+        tv.setText("💾 Saved Opportunities\n\nComing Soon");
+        tv.setTextSize(20);
+        tv.setTextColor(Color.BLACK);
+        tv.setGravity(Gravity.CENTER);
+        layout.addView(tv);
         
-        viewModel.loadSavedOpportunities();
+        return layout;
     }
-    
-    private void initializeViews(View view) {
+}
         filterChipGroup = view.findViewById(R.id.filter_chip_group);
         recyclerViewSaved = view.findViewById(R.id.recycler_saved);
     }

@@ -16,21 +16,24 @@ import com.example.myapplication.viewmodel.AnalyticsViewModel;
 
 public class AnalyticsFragment extends Fragment {
     
-    private TextView tvTotalApplications;
-    private TextView tvInterviewsScheduled;
-    private TextView tvSuccessRate;
-    private TextView tvOffersReceived;
-    private TextView tvInterviewReadiness;
-    private TextView tvPracticeAttempts;
-    private TextView tvAverageScore;
-    
-    private AnalyticsViewModel viewModel;
-    
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_analytics, container, false);
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setGravity(android.view.Gravity.CENTER);
+        layout.setBackgroundColor(android.graphics.Color.WHITE);
+        layout.setPadding(48, 48, 48, 48);
+        
+        android.widget.TextView tv = new android.widget.TextView(requireContext());
+        tv.setText("📈 Analytics Dashboard\n\nComing Soon");
+        tv.setTextSize(20);
+        tv.setTextColor(android.graphics.Color.BLACK);
+        tv.setGravity(android.view.Gravity.CENTER);
+        layout.addView(tv);
+        
+        return layout;
     }
     
     @Override

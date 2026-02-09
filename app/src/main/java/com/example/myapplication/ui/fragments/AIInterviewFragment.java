@@ -24,20 +24,24 @@ import com.google.android.material.chip.ChipGroup;
 
 public class AIInterviewFragment extends Fragment {
     
-    private ChipGroup domainChipGroup;
-    private RecyclerView recyclerViewQuestions;
-    private MaterialButton btnStartInterview;
-    private TextView tvReadinessScore;
-    private TextView tvTotalAttempts;
-    private TextView tvAverageScore;
-    
-    private InterviewViewModel viewModel;
-    private InterviewQuestionAdapter adapter;
-    private String selectedDomain = "SDE";
-    
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setGravity(android.view.Gravity.CENTER);
+        layout.setBackgroundColor(android.graphics.Color.WHITE);
+        layout.setPadding(48, 48, 48, 48);
+        
+        android.widget.TextView tv = new android.widget.TextView(requireContext());
+        tv.setText("🤖 AI Interview Practice\n\nComing Soon");
+        tv.setTextSize(20);
+        tv.setTextColor(android.graphics.Color.BLACK);
+        tv.setGravity(android.view.Gravity.CENTER);
+        layout.addView(tv);
+        
+        return layout;
                              @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_ai_interview, container, false);
     }

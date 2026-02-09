@@ -1,14 +1,14 @@
 package com.example.myapplication;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.example.myapplication.ui.fragments.HomeFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,24 +20,47 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate started");
         
         try {
-            // Create a simple test layout programmatically
-            LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.setGravity(Gravity.CENTER);
-            layout.setBackgroundColor(Color.WHITE);
+            setContentView(R.layout.activity_main);
+            Log.d(TAG, "Layout set");
             
-            TextView textView = new TextView(this);
-            textView.setText("✓ APP IS RUNNING!\n\nIf you see this message,\nthe app launched successfully.\n\nThe issue was with complex layouts/fragments.");
-            textView.setTextSize(20);
-            textView.setTextColor(Color.BLACK);
-            textView.setGravity(Gravity.CENTER);
-            textView.setPadding(48, 48, 48, 48);
+            BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
             
-            layout.addView(textView);
-            setContentView(layout);
+            // Load default fragment
+            if (savedInstanceState == null) {
+                getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.nav_host_fragment, new HomeFragment())
+                    .commit();
+            }
             
-            Toast.makeText(this, "MainActivity loaded successfully!", Toast.LENGTH_LONG).show();
-            Log.d(TAG, "Simple layout created successfully");
+            // Setup bottom navigation
+            bottomNav.setOnItemSelectedListener(item -> {
+                Fragment fragment = null;
+                int itemId = item.getItemId();
+                
+                if (itemId == R.id.navigation_home) {
+                    fragment = new HomeFragment();
+                } else if (itemId == R.id.navigation_saved) {
+                    fragment = new com.example.myapplication.ui.fragments.SavedFragment();
+                } else if (itemId == R.id.navigation_tracker) {
+                    fragment = new com.example.myapplication.ui.fragments.TrackerFragment();
+                } else if (itemId == R.id.navigation_ai) {
+                    fragment = new com.example.myapplication.ui.fragments.AIInterviewFragment();
+                } else if (itemId == R.id.navigation_analytics) {
+                    fragment = new com.example.myapplication.ui.fragments.AnalyticsFragment();
+                }
+                
+                if (fragment != null) {
+                    getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.nav_host_fragment, fragment)
+                        .commit();
+                    return true;
+                }
+                return false;
+            });
+            
+            Log.d(TAG, "MainActivity setup complete");
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate", e);
             Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();

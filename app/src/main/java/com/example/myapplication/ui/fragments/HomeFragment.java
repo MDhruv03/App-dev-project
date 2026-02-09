@@ -1,87 +1,74 @@
 package com.example.myapplication.ui.fragments;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
-import com.example.myapplication.R;
-import com.example.myapplication.adapter.OpportunityAdapter;
-import com.example.myapplication.adapter.OpportunityHorizontalAdapter;
-import com.example.myapplication.database.AppDatabase;
-import com.example.myapplication.model.Opportunity;
-import com.example.myapplication.util.InterviewDataGenerator;
-import com.example.myapplication.util.SampleDataGenerator;
-import com.example.myapplication.viewmodel.OpportunityViewModel;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.search.SearchBar;
-
-import java.util.List;
-import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
     
     private static final String TAG = "HomeFragment";
-    private SearchBar searchBar;
-    private ChipGroup filterChipGroup;
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView recyclerViewRecommended;
-    private RecyclerView recyclerViewAll;
-    
-    private OpportunityHorizontalAdapter recommendedAdapter;
-    private OpportunityAdapter allOpportunitiesAdapter;
-    private OpportunityViewModel viewModel;
     
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView called");
+        
         try {
-            View view = inflater.inflate(R.layout.fragment_home, container, false);
-            Log.d(TAG, "Layout inflated successfully");
-            return view;
+            // Create simple layout programmatically instead of XML for now
+            LinearLayout layout = new LinearLayout(requireContext());
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setBackgroundColor(Color.parseColor("#F9FAFB"));
+            layout.setPadding(48, 48, 48, 48);
+            layout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            ));
+            
+            TextView title = new TextView(requireContext());
+            title.setText("OpportunityHub");
+            title.setTextSize(28);
+            title.setTextColor(Color.parseColor("#111827"));
+            title.setGravity(Gravity.CENTER);
+            title.setPadding(0, 0, 0, 32);
+            layout.addView(title);
+            
+            TextView message = new TextView(requireContext());
+            message.setText("Home Fragment Loaded Successfully!\n\nThe app is now working.\nLayouts will be enhanced next.");
+            message.setTextSize(16);
+            message.setTextColor(Color.parseColor("#374151"));
+            message.setGravity(Gravity.CENTER);
+            message.setPadding(0, 0, 0, 24);
+            layout.addView(message);
+            
+            ProgressBar progressBar = new ProgressBar(requireContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);
+            params.gravity = Gravity.CENTER_HORIZONTAL;
+            progressBar.setLayoutParams(params);
+            layout.addView(progressBar);
+            
+            Log.d(TAG, "Simple home fragment view created");
+            return layout;
+            
         } catch (Exception e) {
-            Log.e(TAG, "Error inflating layout", e);
-            Toast.makeText(requireContext(), "Error loading home: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Error creating view", e);
+            Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             return null;
         }
     }
-    
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        Log.d(TAG, "onViewCreated called");
-        
-        try {
-            initializeViews(view);
-            setupViewModel();
-            setupRecyclerViews();
-            setupSwipeRefresh();
-            setupFilters();
-            
-            // Initialize database with sample data on first run
-            initializeDatabaseIfNeeded();
-            
-            viewModel.loadAllOpportunities();
-            viewModel.loadRecommendedOpportunities();
-            Log.d(TAG, "View setup completed successfully");
-        } catch (Exception e) {
-            Log.e(TAG, "Error in onViewCreated", e);
-            Toast.makeText(requireContext(), "Error setting up home: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
+}
     
     private void initializeViews(View view) {
         searchBar = view.findViewById(R.id.search_bar);

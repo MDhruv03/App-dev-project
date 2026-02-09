@@ -31,21 +31,28 @@ import java.util.Locale;
 
 public class TrackerFragment extends Fragment {
     
-    private ChipGroup statusChipGroup;
-    private RecyclerView recyclerViewApplications;
-    private ExtendedFloatingActionButton fabAddApplication;
-    
-    private ApplicationViewModel viewModel;
-    private ApplicationAdapter adapter;
-    
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_tracker, container, false);
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setGravity(android.view.Gravity.CENTER);
+        layout.setBackgroundColor(android.graphics.Color.WHITE);
+        layout.setPadding(48, 48, 48, 48);
+        
+        android.widget.TextView tv = new android.widget.TextView(requireContext());
+        tv.setText("📊 Application Tracker\n\nComing Soon");
+        tv.setTextSize(20);
+        tv.setTextColor(android.graphics.Color.BLACK);
+        tv.setGravity(android.view.Gravity.CENTER);
+        layout.addView(tv);
+        
+        return layout;
     }
     
-    @Override
+    /* Simplified version - full implementation coming soon */
+    /*@Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
