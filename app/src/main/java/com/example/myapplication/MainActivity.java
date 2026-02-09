@@ -1,6 +1,8 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -16,20 +18,30 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private BottomNavigationView bottomNavigationView;
     private FragmentManager fragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        Log.d(TAG, "onCreate started");
         
-        initializeViews();
-        setupBottomNavigation();
-        
-        // Load default fragment
-        if (savedInstanceState == null) {
-            loadFragment(new HomeFragment());
+        try {
+            setContentView(R.layout.activity_main);
+            Log.d(TAG, "Layout inflated successfully");
+            
+            initializeViews();
+            setupBottomNavigation();
+            
+            // Load default fragment
+            if (savedInstanceState == null) {
+                loadFragment(new HomeFragment());
+            }
+            Log.d(TAG, "onCreate completed successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            Toast.makeText(this, "Error initializing app: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
     
