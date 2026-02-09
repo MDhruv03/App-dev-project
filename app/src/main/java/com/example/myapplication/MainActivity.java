@@ -1,28 +1,18 @@
 package com.example.myapplication;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-
-import com.example.myapplication.ui.fragments.AIInterviewFragment;
-import com.example.myapplication.ui.fragments.AnalyticsFragment;
-import com.example.myapplication.ui.fragments.HomeFragment;
-import com.example.myapplication.ui.fragments.SavedFragment;
-import com.example.myapplication.ui.fragments.TestFragment;
-import com.example.myapplication.ui.fragments.TrackerFragment;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private static final boolean USE_TEST_FRAGMENT = true; // Set to false to use normal HomeFragment
-    private BottomNavigationView bottomNavigationView;
-    private FragmentManager fragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,74 +20,27 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate started");
         
         try {
-            setContentView(R.layout.activity_main);
-            Log.d(TAG, "Layout inflated successfully");
+            // Create a simple test layout programmatically
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setGravity(Gravity.CENTER);
+            layout.setBackgroundColor(Color.WHITE);
             
-            initializeViews();
-            setupBottomNavigation();
+            TextView textView = new TextView(this);
+            textView.setText("✓ APP IS RUNNING!\n\nIf you see this message,\nthe app launched successfully.\n\nThe issue was with complex layouts/fragments.");
+            textView.setTextSize(20);
+            textView.setTextColor(Color.BLACK);
+            textView.setGravity(Gravity.CENTER);
+            textView.setPadding(48, 48, 48, 48);
             
-            // Load default fragment
-            if (savedInstanceState == null) {
-                if (USE_TEST_FRAGMENT) {
-                    Log.d(TAG, "Loading TestFragment for diagnostics");
-                    loadFragment(new TestFragment());
-                } else {
-                    loadFragment(new HomeFragment());
-                }
-            }
-            Log.d(TAG, "onCreate completed successfully");
+            layout.addView(textView);
+            setContentView(layout);
+            
+            Toast.makeText(this, "MainActivity loaded successfully!", Toast.LENGTH_LONG).show();
+            Log.d(TAG, "Simple layout created successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate", e);
-            Toast.makeText(this, "Error initializing app: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-    
-    private void initializeViews() {
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
-        if (bottomNavigationView == null) {
-            Log.e(TAG, "Bottom navigation view is null!");
-            Toast.makeText(this, "Error: Bottom navigation not found", Toast.LENGTH_LONG).show();
-            return;
-        }
-        fragmentManager = getSupportFragmentManager();
-        Log.d(TAG, "Views initialized successfully");
-    }
-    
-    private void setupBottomNavigation() {
-        bottomNavigationView.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
-            int itemId = item.getItemId();
-            
-            if (itemId == R.id.navigation_home) {
-                selectedFragment = new HomeFragment();
-            } else if (itemId == R.id.navigation_saved) {
-                selectedFragment = new SavedFragment();
-            } else if (itemId == R.id.navigation_tracker) {
-                selectedFragment = new TrackerFragment();
-            } else if (itemId == R.id.navigation_ai) {
-                selectedFragment = new AIInterviewFragment();
-            } else if (itemId == R.id.navigation_analytics) {
-                selectedFragment = new AnalyticsFragment();
-            }
-            
-            if (selectedFragment != null) {
-                loadFragment(selectedFragment);
-                return true;
-            }
-            return false;
-        });
-    }
-    
-    private void loadFragment(Fragment fragment) {
-        try {
-            Log.d(TAG, "Loading fragment: " + fragment.getClass().getSimpleName());
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.replace(R.id.nav_host_fragment, fragment);
-            transaction.commitAllowingStateLoss();
-            Log.d(TAG, "Fragment loaded successfully");
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading fragment", e);
-            Toast.makeText(this, "Error loading fragment: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }
