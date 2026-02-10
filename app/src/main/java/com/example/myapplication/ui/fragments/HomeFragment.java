@@ -1,6 +1,8 @@
 package com.example.myapplication.ui.fragments;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,15 +17,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.myapplication.R;
 import com.example.myapplication.adapter.OpportunityAdapter;
 import com.example.myapplication.adapter.OpportunityHorizontalAdapter;
-import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.model.Opportunity;
-import com.example.myapplication.util.SampleDataGenerator;
 import com.example.myapplication.viewmodel.OpportunityViewModel;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.search.SearchBar;
-import java.util.List;
-import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
     
@@ -52,7 +50,7 @@ public class HomeFragment extends Fragment {
         setupRecyclerViews();
         setupSwipeRefresh();
         setupFilters();
-        initializeDatabaseIfNeeded();
+        setupSearch();
         
         viewModel.loadAllOpportunities();
         viewModel.loadRecommendedOpportunities();
@@ -146,29 +144,27 @@ public class HomeFragment extends Fragment {
         });
     }
     
-    private void initializeDatabaseIfNeeded() {
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                AppDatabase db = AppDatabase.getInstance(requireContext());
-                List<Opportunity> existing = db.opportunityDao().getAllOpportunities();
-                
-                if (existing == null || existing.isEmpty()) {
-                    List<Opportunity> sampleData = SampleDataGenerator.generateOpportunities(20);
-                    for (Opportunity opp : sampleData) {
-                        db.opportunityDao().insert(opp);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+    private void setupSearch() {
+        searchBar.addTextChangeListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                viewModel.searchOpportunities(s.toString());
             }
+            
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
     }
     
     private void showOpportunityDetails(Opportunity opportunity) {
-        Toast.makeText(requireContext(), "Opportunity: " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), opportunity.getTitle() + "\n" + opportunity.getCompany(), Toast.LENGTH_SHORT).show();
     }
     
     private void applyToOpportunity(Opportunity opportunity) {
+        viewModel.markAsApplied(opportunity);
         Toast.makeText(requireContext(), "Applied to " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
     }
     

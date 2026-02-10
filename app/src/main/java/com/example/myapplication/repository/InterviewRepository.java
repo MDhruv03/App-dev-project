@@ -6,6 +6,7 @@ import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.database.InterviewQuestionDao;
 import com.example.myapplication.model.InterviewProgress;
 import com.example.myapplication.model.InterviewQuestion;
+import com.example.myapplication.network.MockApiService;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -14,11 +15,13 @@ import java.util.concurrent.Executors;
 public class InterviewRepository {
     
     private final InterviewQuestionDao interviewDao;
+    private final MockApiService apiService;
     private final ExecutorService executorService;
     
     public InterviewRepository(Context context) {
         AppDatabase database = AppDatabase.getInstance(context);
         interviewDao = database.interviewQuestionDao();
+        apiService = MockApiService.getInstance();
         executorService = Executors.newSingleThreadExecutor();
     }
     
@@ -32,13 +35,18 @@ public class InterviewRepository {
         });
     }
     
-    // Get questions by domain
+    // Get questions by domain (fetch from API, cache locally)
     public void getQuestionsByDomain(String domain, OnQuestionsLoadedListener listener) {
-        executorService.execute(() -> {
-            List<InterviewQuestion> questions = interviewDao.getQuestionsByDomain(domain);
-            if (listener != null) {
-                listener.onLoaded(questions);
-            }
+        apiService.fetchQuestionsByDomain(domain, questions -> {
+            executorService.execute(() -> {
+                // Cache questions locally
+                for (InterviewQuestion q : questions) {
+                    interviewDao.insert(q);
+                }
+                if (listener != null) {
+                    listener.onLoaded(questions);
+                }
+            });
         });
     }
     

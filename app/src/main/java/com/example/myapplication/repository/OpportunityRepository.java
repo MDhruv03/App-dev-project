@@ -5,6 +5,7 @@ import android.content.Context;
 import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.database.OpportunityDao;
 import com.example.myapplication.model.Opportunity;
+import com.example.myapplication.network.MockApiService;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -13,11 +14,13 @@ import java.util.concurrent.Executors;
 public class OpportunityRepository {
     
     private final OpportunityDao opportunityDao;
+    private final MockApiService apiService;
     private final ExecutorService executorService;
     
     public OpportunityRepository(Context context) {
         AppDatabase database = AppDatabase.getInstance(context);
         opportunityDao = database.opportunityDao();
+        apiService = MockApiService.getInstance();
         executorService = Executors.newSingleThreadExecutor();
     }
     
@@ -31,20 +34,25 @@ public class OpportunityRepository {
         });
     }
     
-    // Get all opportunities
+    // Get all opportunities (fetch from API and cache locally)
     public void getAllOpportunities(OnOpportunitiesLoadedListener listener) {
-        executorService.execute(() -> {
-            List<Opportunity> opportunities = opportunityDao.getAllOpportunities();
-            if (listener != null) {
-                listener.onLoaded(opportunities);
-            }
+        apiService.fetchOpportunities(opportunities -> {
+            executorService.execute(() -> {
+                // Clear and refresh local cache
+                opportunityDao.deleteAll();
+                for (Opportunity opp : opportunities) {
+                    opportunityDao.insert(opp);
+                }
+                if (listener != null) {
+                    listener.onLoaded(opportunities);
+                }
+            });
         });
     }
     
     // Get recommended opportunities
     public void getRecommendedOpportunities(OnOpportunitiesLoadedListener listener) {
-        executorService.execute(() -> {
-            List<Opportunity> opportunities = opportunityDao.getRecommendedOpportunities();
+        apiService.fetchRecommendedOpportunities(opportunities -> {
             if (listener != null) {
                 listener.onLoaded(opportunities);
             }
@@ -53,8 +61,7 @@ public class OpportunityRepository {
     
     // Get saved opportunities
     public void getSavedOpportunities(OnOpportunitiesLoadedListener listener) {
-        executorService.execute(() -> {
-            List<Opportunity> opportunities = opportunityDao.getSavedOpportunities();
+        apiService.fetchSavedOpportunities(opportunities -> {
             if (listener != null) {
                 listener.onLoaded(opportunities);
             }
@@ -63,21 +70,25 @@ public class OpportunityRepository {
     
     // Update saved status
     public void updateSavedStatus(int id, boolean saved, OnOperationCompleteListener listener) {
-        executorService.execute(() -> {
-            opportunityDao.updateSavedStatus(id, saved);
-            if (listener != null) {
-                listener.onComplete(true);
-            }
+        apiService.updateOpportunitySaveStatus(id, saved, success -> {
+            executorService.execute(() -> {
+                opportunityDao.updateSavedStatus(id, saved);
+                if (listener != null) {
+                    listener.onComplete(success);
+                }
+            });
         });
     }
     
     // Update applied status
     public void updateAppliedStatus(int id, boolean applied, OnOperationCompleteListener listener) {
-        executorService.execute(() -> {
-            opportunityDao.updateAppliedStatus(id, applied);
-            if (listener != null) {
-                listener.onComplete(true);
-            }
+        apiService.updateOpportunityApplyStatus(id, applied, success -> {
+            executorService.execute(() -> {
+                opportunityDao.updateAppliedStatus(id, applied);
+                if (listener != null) {
+                    listener.onComplete(success);
+                }
+            });
         });
     }
     

@@ -82,15 +82,6 @@ public class SavedFragment extends Fragment {
     
     private void setupFilters() {
         filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            String type = "all";
-            if (!checkedIds.isEmpty()) {
-                int checkedId = checkedIds.get(0);
-                Chip chip = group.findViewById(checkedId);
-                if (chip != null) {
-                    type = chip.getText().toString().toLowerCase();
-                }
-            }
-            viewModel.filterByType(type);
             viewModel.loadSavedOpportunities();
         });
     }
