@@ -24,54 +24,43 @@ public class ApplicationRepository {
         executorService = Executors.newSingleThreadExecutor();
     }
     
-    // Insert application (API + local DB)
+    // Insert application (local DB only)
     public void insert(Application application, OnOperationCompleteListener listener) {
-        apiService.addApplication(application, app -> {
-            executorService.execute(() -> {
-                long id = applicationDao.insert(app);
-                if (listener != null) {
-                    listener.onComplete(id > 0);
-                }
-            });
+        executorService.execute(() -> {
+            long id = applicationDao.insert(application);
+            if (listener != null) {
+                listener.onComplete(id > 0);
+            }
         });
     }
     
-    // Update application (API + local DB)
+    // Update application (local DB only)
     public void update(Application application, OnOperationCompleteListener listener) {
-        apiService.updateApplication(application, success -> {
-            executorService.execute(() -> {
-                applicationDao.update(application);
-                if (listener != null) {
-                    listener.onComplete(success);
-                }
-            });
+        executorService.execute(() -> {
+            applicationDao.update(application);
+            if (listener != null) {
+                listener.onComplete(true);
+            }
         });
     }
     
-    // Delete application (API + local DB)
+    // Delete application (local DB only)
     public void delete(Application application, OnOperationCompleteListener listener) {
-        apiService.deleteApplication(application.getId(), success -> {
-            executorService.execute(() -> {
-                applicationDao.delete(application);
-                if (listener != null) {
-                    listener.onComplete(success);
-                }
-            });
+        executorService.execute(() -> {
+            applicationDao.delete(application);
+            if (listener != null) {
+                listener.onComplete(true);
+            }
         });
     }
     
-    // Get all applications (fetch from API, cache locally)
+    // Get all applications (fetch from local DB)
     public void getAllApplications(int userId, OnApplicationsLoadedListener listener) {
-        apiService.fetchApplications(userId, applications -> {
-            executorService.execute(() -> {
-                // Sync with local DB
-                for (Application app : applications) {
-                    applicationDao.insert(app);
-                }
-                if (listener != null) {
-                    listener.onLoaded(applications);
-                }
-            });
+        executorService.execute(() -> {
+            List<Application> applications = applicationDao.getAllApplications(userId);
+            if (listener != null) {
+                listener.onLoaded(applications);
+            }
         });
     }
     

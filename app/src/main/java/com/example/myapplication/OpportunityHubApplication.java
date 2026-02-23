@@ -107,7 +107,7 @@ public class OpportunityHubApplication extends Application {
             try {
                 AppDatabase db = AppDatabase.getInstance(this);
                 
-                // Check if database is empty
+                // Check if opportunity database is empty
                 List<Opportunity> existing = db.opportunityDao().getAllOpportunities();
                 
                 if (existing == null || existing.isEmpty()) {
@@ -125,6 +125,31 @@ public class OpportunityHubApplication extends Application {
                     Logger.d("App", "Inserted " + count + " opportunities into database");
                 } else {
                     Logger.d("App", "Database already populated with " + existing.size() + " opportunities");
+                }
+                
+                // Initialize interview questions if empty
+                List<com.example.myapplication.model.InterviewQuestion> existingQuestions = 
+                    db.interviewQuestionDao().getQuestionsByDomain("SDE");
+                
+                if (existingQuestions == null || existingQuestions.isEmpty()) {
+                    Logger.d("App", "Populating interview questions...");
+                    
+                    // Generate questions for all domains
+                    String[] domains = {"SDE", "ML", "Web", "Android", "HR"};
+                    int questionCount = 0;
+                    
+                    for (String domain : domains) {
+                        List<com.example.myapplication.model.InterviewQuestion> questions = 
+                            com.example.myapplication.util.InterviewDataGenerator.generateQuestionsForDomain(domain);
+                        for (com.example.myapplication.model.InterviewQuestion q : questions) {
+                            db.interviewQuestionDao().insert(q);
+                            questionCount++;
+                        }
+                    }
+                    
+                    Logger.d("App", "Inserted " + questionCount + " interview questions");
+                } else {
+                    Logger.d("App", "Interview questions already populated");
                 }
             } catch (Exception e) {
                 Logger.e("App", "Error initializing database", e);

@@ -35,18 +35,13 @@ public class InterviewRepository {
         });
     }
     
-    // Get questions by domain (fetch from API, cache locally)
+    // Get questions by domain (fetch from local DB)
     public void getQuestionsByDomain(String domain, OnQuestionsLoadedListener listener) {
-        apiService.fetchQuestionsByDomain(domain, questions -> {
-            executorService.execute(() -> {
-                // Cache questions locally
-                for (InterviewQuestion q : questions) {
-                    interviewDao.insert(q);
-                }
-                if (listener != null) {
-                    listener.onLoaded(questions);
-                }
-            });
+        executorService.execute(() -> {
+            List<InterviewQuestion> questions = interviewDao.getQuestionsByDomain(domain);
+            if (listener != null) {
+                listener.onLoaded(questions);
+            }
         });
     }
     

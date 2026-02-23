@@ -34,25 +34,20 @@ public class OpportunityRepository {
         });
     }
     
-    // Get all opportunities (fetch from API and cache locally)
+    // Get all opportunities (fetch from database, not API)
     public void getAllOpportunities(OnOpportunitiesLoadedListener listener) {
-        apiService.fetchOpportunities(opportunities -> {
-            executorService.execute(() -> {
-                // Clear and refresh local cache
-                opportunityDao.deleteAll();
-                for (Opportunity opp : opportunities) {
-                    opportunityDao.insert(opp);
-                }
-                if (listener != null) {
-                    listener.onLoaded(opportunities);
-                }
-            });
+        executorService.execute(() -> {
+            List<Opportunity> opportunities = opportunityDao.getAllOpportunities();
+            if (listener != null) {
+                listener.onLoaded(opportunities);
+            }
         });
     }
     
     // Get recommended opportunities
     public void getRecommendedOpportunities(OnOpportunitiesLoadedListener listener) {
-        apiService.fetchRecommendedOpportunities(opportunities -> {
+        executorService.execute(() -> {
+            List<Opportunity> opportunities = opportunityDao.getRecommendedOpportunities();
             if (listener != null) {
                 listener.onLoaded(opportunities);
             }
@@ -61,7 +56,8 @@ public class OpportunityRepository {
     
     // Get saved opportunities
     public void getSavedOpportunities(OnOpportunitiesLoadedListener listener) {
-        apiService.fetchSavedOpportunities(opportunities -> {
+        executorService.execute(() -> {
+            List<Opportunity> opportunities = opportunityDao.getSavedOpportunities();
             if (listener != null) {
                 listener.onLoaded(opportunities);
             }
@@ -70,25 +66,21 @@ public class OpportunityRepository {
     
     // Update saved status
     public void updateSavedStatus(int id, boolean saved, OnOperationCompleteListener listener) {
-        apiService.updateOpportunitySaveStatus(id, saved, success -> {
-            executorService.execute(() -> {
-                opportunityDao.updateSavedStatus(id, saved);
-                if (listener != null) {
-                    listener.onComplete(success);
-                }
-            });
+        executorService.execute(() -> {
+            opportunityDao.updateSavedStatus(id, saved);
+            if (listener != null) {
+                listener.onComplete(true);
+            }
         });
     }
     
     // Update applied status
     public void updateAppliedStatus(int id, boolean applied, OnOperationCompleteListener listener) {
-        apiService.updateOpportunityApplyStatus(id, applied, success -> {
-            executorService.execute(() -> {
-                opportunityDao.updateAppliedStatus(id, applied);
-                if (listener != null) {
-                    listener.onComplete(success);
-                }
-            });
+        executorService.execute(() -> {
+            opportunityDao.updateAppliedStatus(id, applied);
+            if (listener != null) {
+                listener.onComplete(true);
+            }
         });
     }
     
