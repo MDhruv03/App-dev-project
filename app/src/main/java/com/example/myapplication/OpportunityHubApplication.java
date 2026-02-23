@@ -111,14 +111,23 @@ public class OpportunityHubApplication extends Application {
                 List<Opportunity> existing = db.opportunityDao().getAllOpportunities();
                 
                 if (existing == null || existing.isEmpty()) {
-                    // Populate with sample data
-                    List<Opportunity> opportunities = SampleDataGenerator.generateOpportunities(50);
+                    Logger.d("App", "Database empty, generating sample data...");
+                    
+                    // Populate with comprehensive sample data (120+ opportunities)
+                    List<Opportunity> opportunities = SampleDataGenerator.generateOpportunities(120);
+                    
+                    int count = 0;
                     for (Opportunity opp : opportunities) {
                         db.opportunityDao().insert(opp);
+                        count++;
                     }
+                    
+                    Logger.d("App", "Inserted " + count + " opportunities into database");
+                } else {
+                    Logger.d("App", "Database already populated with " + existing.size() + " opportunities");
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.e("App", "Error initializing database", e);
             }
         });
     }
