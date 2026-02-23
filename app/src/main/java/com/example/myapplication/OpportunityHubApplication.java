@@ -42,23 +42,12 @@ public class OpportunityHubApplication extends Application {
         MockApiService.getInstance();
         
         // Initialize database with sample data
-        initializeDaLogger.d("App", "Database empty, generating sample data...");
-                    
-                    // Populate with comprehensive sample data (120+ opportunities)
-                    List<Opportunity> opportunities = SampleDataGenerator.generateOpportunities(120);
-                    
-                    int count = 0;
-                    for (Opportunity opp : opportunities) {
-                        db.opportunityDao().insert(opp);
-                        count++;
-                    }
-                    
-                    Logger.d("App", "Inserted " + count + " opportunities into database");
-                } else {
-                    Logger.d("App", "Database already populated with " + existing.size() + " opportunities");
-                }
-            } catch (Exception e) {
-                Logger.e("App", "Error initializing database", e
+        initializeDatabase();
+    }
+    
+    /**
+     * Initialize logger with debug level
+     */
     private void initializeLogger() {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         Logger.d("App", "Logger initialized");
