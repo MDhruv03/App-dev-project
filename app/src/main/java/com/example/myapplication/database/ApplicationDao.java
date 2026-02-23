@@ -25,6 +25,9 @@ public interface ApplicationDao {
     @Query("SELECT * FROM applications WHERE userId = :userId ORDER BY statusUpdatedAt DESC")
     List<Application> getAllApplications(int userId);
     
+    @Query("SELECT * FROM applications ORDER BY statusUpdatedAt DESC")
+    List<Application> getAllApplicationsSync();
+    
     @Query("SELECT * FROM applications WHERE userId = :userId AND status = :status ORDER BY statusUpdatedAt DESC")
     List<Application> getApplicationsByStatus(int userId, String status);
     

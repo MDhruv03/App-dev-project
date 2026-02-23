@@ -28,6 +28,11 @@ public class Opportunity {
     private String applyLink;
     private String imageUrl;
     
+    // Additional details
+    private String salary; // e.g., "$90K - $150K/year" or "$3000/month"
+    private String duration; // e.g., "12 weeks", "Full-time", "48 hours"
+    private String experienceLevel; // e.g., "Entry Level", "Mid Level", "Senior"
+    
     // Recommendation score
     private double recommendationScore;
     private int matchPercentage;
@@ -102,6 +107,17 @@ public class Opportunity {
     
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    public String getSalary() { return salary; }
+    public void setSalary(String salary) { this.salary = salary; }
+    
+    public String getDuration() { return duration; }
+    public void setDuration(String duration) { this.duration = duration; }
+    
+    public String getExperienceLevel() { return experienceLevel; }
+    public void setExperienceLevel(String experienceLevel) { 
+        this.experienceLevel = experienceLevel; 
+    }
     
     public double getRecommendationScore() { return recommendationScore; }
     public void setRecommendationScore(double recommendationScore) { 

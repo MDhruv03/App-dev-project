@@ -25,6 +25,9 @@ public interface OpportunityDao {
     @Query("SELECT * FROM opportunities ORDER BY recommendationScore DESC")
     List<Opportunity> getAllOpportunities();
     
+    @Query("SELECT * FROM opportunities ORDER BY recommendationScore DESC")
+    List<Opportunity> getAllOpportunitiesSync();
+    
     @Query("SELECT * FROM opportunities WHERE isSaved = 1 ORDER BY updatedAt DESC")
     List<Opportunity> getSavedOpportunities();
     

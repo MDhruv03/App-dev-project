@@ -17,6 +17,10 @@ public class Application {
     private int opportunityId;
     private int userId;
     
+    // Denormalized data for quick access
+    private String company;
+    private String position;
+    
     // Application status
     private String status; // "saved", "applied", "interview", "rejected", "accepted"
     
@@ -29,6 +33,8 @@ public class Application {
     // Timeline
     private Date savedAt;
     private Date appliedAt;
+    private Date appliedDate; // Alias for compatibility
+    private Date responseDate; // When company responded
     private Date interviewScheduledAt;
     private Date statusUpdatedAt;
     
@@ -57,6 +63,12 @@ public class Application {
     
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
+    
+    public String getCompany() { return company; }
+    public void setCompany(String company) { this.company = company; }
+    
+    public String getPosition() { return position; }
+    public void setPosition(String position) { this.position = position; }
     
     public String getStatus() { return status; }
     public void setStatus(String status) { 
@@ -87,6 +99,12 @@ public class Application {
     
     public Date getAppliedAt() { return appliedAt; }
     public void setAppliedAt(Date appliedAt) { this.appliedAt = appliedAt; }
+    
+    public Date getAppliedDate() { return appliedDate != null ? appliedDate : appliedAt; }
+    public void setAppliedDate(Date appliedDate) { this.appliedDate = appliedDate; }
+    
+    public Date getResponseDate() { return responseDate; }
+    public void setResponseDate(Date responseDate) { this.responseDate = responseDate; }
     
     public Date getInterviewScheduledAt() { return interviewScheduledAt; }
     public void setInterviewScheduledAt(Date interviewScheduledAt) { 

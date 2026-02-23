@@ -49,6 +49,40 @@ public class PreferencesManager {
         preferences.edit().putString(KEY_USER_EMAIL, email).apply();
     }
     
+    // Generic methods for any key-value pairs
+    
+    public String getString(String key, String defaultValue) {
+        return preferences.getString(key, defaultValue);
+    }
+    
+    public void putString(String key, String value) {
+        preferences.edit().putString(key, value).apply();
+    }
+    
+    public boolean getBoolean(String key, boolean defaultValue) {
+        return preferences.getBoolean(key, defaultValue);
+    }
+    
+    public void putBoolean(String key, boolean value) {
+        preferences.edit().putBoolean(key, value).apply();
+    }
+    
+    public int getInt(String key, int defaultValue) {
+        return preferences.getInt(key, defaultValue);
+    }
+    
+    public void putInt(String key, int value) {
+        preferences.edit().putInt(key, value).apply();
+    }
+    
+    public long getLong(String key, long defaultValue) {
+        return preferences.getLong(key, defaultValue);
+    }
+    
+    public void putLong(String key, long value) {
+        preferences.edit().putLong(key, value).apply();
+    }
+    
     public void clearAll() {
         preferences.edit().clear().apply();
     }
