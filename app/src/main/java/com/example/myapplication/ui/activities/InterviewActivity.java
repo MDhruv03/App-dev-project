@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -47,6 +48,7 @@ public class InterviewActivity extends AppCompatActivity {
         initializeViews();
         setupViewModel();
         setupListeners();
+        setupBackPress();
         
         viewModel.loadQuestionsByDomain(selectedDomain);
     }
@@ -160,13 +162,17 @@ public class InterviewActivity extends AppCompatActivity {
             .show();
     }
     
-    @Override
-    public void onBackPressed() {
-        new AlertDialog.Builder(this)
-            .setTitle("Exit Interview?")
-            .setMessage("Your progress will be lost if you exit now.")
-            .setPositiveButton("Exit", (dialog, which) -> finish())
-            .setNegativeButton("Continue", null)
-            .show();
+    private void setupBackPress() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                new AlertDialog.Builder(InterviewActivity.this)
+                    .setTitle("Exit Interview?")
+                    .setMessage("Your progress will be lost if you exit now.")
+                    .setPositiveButton("Exit", (dialog, which) -> finish())
+                    .setNegativeButton("Continue", null)
+                    .show();
+            }
+        });
     }
 }

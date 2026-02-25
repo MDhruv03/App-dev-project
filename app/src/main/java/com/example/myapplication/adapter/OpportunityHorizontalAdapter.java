@@ -23,6 +23,7 @@ public class OpportunityHorizontalAdapter extends RecyclerView.Adapter<Opportuni
     
     public interface OnOpportunityClickListener {
         void onOpportunityClick(Opportunity opportunity);
+        void onSaveClick(Opportunity opportunity);
     }
     
     public OpportunityHorizontalAdapter() {

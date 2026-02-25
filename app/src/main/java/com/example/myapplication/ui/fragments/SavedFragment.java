@@ -72,6 +72,7 @@ public class SavedFragment extends Fragment {
                 Toast.makeText(requireContext(), "Applied to " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
             }
             
+            @Override
             public void onSaveClick(Opportunity opportunity) {
                 viewModel.toggleSaveStatus(opportunity);
                 Toast.makeText(requireContext(), "Removed from saved", Toast.LENGTH_SHORT).show();
