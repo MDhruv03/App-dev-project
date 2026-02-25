@@ -129,4 +129,16 @@ public class UserPreferences {
     
     public Date getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+    
+    // Convenience methods
+    public boolean isOnlyPaid() { return preferPaid; }
+    public boolean isRemoteOnly() { return preferRemote && !preferOnsite && !preferHybrid; }
+    
+    public List<String> getInterestedTypes() {
+        List<String> types = new java.util.ArrayList<>();
+        if (interestedInInternships) types.add("Internship");
+        if (interestedInJobs) types.add("Job");
+        if (interestedInHackathons) types.add("Hackathon");
+        return types;
+    }
 }

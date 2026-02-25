@@ -66,9 +66,11 @@ public class NotificationViewModel extends AndroidViewModel {
                 notification.setType(type);
                 notification.setTitle(title);
                 notification.setMessage(message);
-                notification.setTimestamp(new Date());
+                notification.setTimestamp(new Date().getTime());
                 notification.setRead(false);
-                notification.setRelatedId(relatedId);
+                if (relatedId != null) {
+                    notification.setRelatedId(relatedId.intValue());
+                }
                 notification.setActionUrl(actionUrl);
                 
                 notificationDao.insert(notification);
@@ -82,7 +84,7 @@ public class NotificationViewModel extends AndroidViewModel {
     public void markAsRead(long notificationId) {
         executorService.execute(() -> {
             try {
-                notificationDao.markAsRead(notificationId);
+                notificationDao.markAsRead((int) notificationId);
                 Logger.d(TAG, "Notification marked as read: " + notificationId);
             } catch (Exception e) {
                 Logger.e(TAG, "Error marking notification as read", e);
@@ -105,7 +107,7 @@ public class NotificationViewModel extends AndroidViewModel {
         executorService.execute(() -> {
             try {
                 Notification notification = new Notification();
-                notification.setId(notificationId);
+                notification.setId((int) notificationId);
                 notificationDao.delete(notification);
                 Logger.d(TAG, "Notification deleted: " + notificationId);
             } catch (Exception e) {
@@ -117,7 +119,7 @@ public class NotificationViewModel extends AndroidViewModel {
     public void deleteOldNotifications(Date beforeDate) {
         executorService.execute(() -> {
             try {
-                notificationDao.deleteOldNotifications(beforeDate);
+                notificationDao.deleteOldNotifications(beforeDate.getTime());
                 Logger.d(TAG, "Old notifications deleted");
             } catch (Exception e) {
                 Logger.e(TAG, "Error deleting old notifications", e);

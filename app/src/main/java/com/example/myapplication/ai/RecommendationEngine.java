@@ -58,7 +58,7 @@ public class RecommendationEngine {
         // Skill matching
         if (user != null && user.getSkills() != null && opportunity.getRequiredSkills() != null) {
             int skillMatches = 0;
-            for (String userSkill : user.getSkills()) {
+            for (String userSkill : user.getSkills().keySet()) {
                 for (String requiredSkill : opportunity.getRequiredSkills()) {
                     if (userSkill.equalsIgnoreCase(requiredSkill)) {
                         skillMatches++;
@@ -158,7 +158,7 @@ public class RecommendationEngine {
         }
         
         int matches = 0;
-        for (String userSkill : user.getSkills()) {
+        for (String userSkill : user.getSkills().keySet()) {
             for (String requiredSkill : opportunity.getRequiredSkills()) {
                 if (userSkill.equalsIgnoreCase(requiredSkill)) {
                     matches++;

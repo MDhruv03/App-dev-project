@@ -82,8 +82,7 @@ public class OpportunityHubApplication extends Application {
      * Initialize notification channels
      */
     private void initializeNotifications() {
-        NotificationHelper notificationHelper = new NotificationHelper(this);
-        notificationHelper.createNotificationChannels();
+        NotificationHelper.createNotificationChannels(this);
         Logger.d("App", "Notification channels created");
     }
     

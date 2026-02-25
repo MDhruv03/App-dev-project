@@ -45,6 +45,18 @@ public interface ActivityLogDao {
     @Query("SELECT COUNT(*) FROM activity_logs")
     LiveData<Integer> getTotalActivityCount();
     
+    @Query("SELECT * FROM activity_logs ORDER BY timestamp DESC")
+    LiveData<List<ActivityLog>> getAllLogs();
+    
+    @Query("SELECT * FROM activity_logs WHERE activityType = :activityType ORDER BY timestamp DESC")
+    LiveData<List<ActivityLog>> getLogsByType(String activityType);
+    
+    @Query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT :limit")
+    LiveData<List<ActivityLog>> getRecentLogs(int limit);
+    
+    @Query("DELETE FROM activity_logs WHERE timestamp < :beforeDate")
+    void deleteOldLogs(Date beforeDate);
+    
     @Query("DELETE FROM activity_logs")
     void deleteAll();
 }

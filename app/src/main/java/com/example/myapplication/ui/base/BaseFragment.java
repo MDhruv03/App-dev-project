@@ -98,7 +98,9 @@ public abstract class BaseFragment extends Fragment {
      */
     protected void hideKeyboard() {
         if (getActivity() != null) {
-            UIUtils.hideKeyboard(getActivity());
+            View view = getActivity().getCurrentFocus();
+            if (view == null) view = new View(getActivity());
+            UIUtils.hideKeyboard(getActivity(), view);
         }
     }
     

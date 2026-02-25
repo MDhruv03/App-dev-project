@@ -61,7 +61,7 @@ public class AnalyticsTracker {
             if (metadata != null && metadata.containsKey("opportunity_id")) {
                 try {
                     long opportunityId = Long.parseLong(metadata.get("opportunity_id"));
-                    log.setRelatedOpportunityId(opportunityId);
+                    log.setRelatedOpportunityId((int) opportunityId);
                 } catch (NumberFormatException e) {
                     // Ignore
                 }

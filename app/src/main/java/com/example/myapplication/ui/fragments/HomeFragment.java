@@ -145,7 +145,11 @@ public class HomeFragment extends Fragment {
     }
     
     private void setupSearch() {
-        searchBar.addTextChangeListener(new TextWatcher() {
+        // TODO: Material SearchBar doesn't support TextWatcher directly
+        // Need to refactor to use SearchView or EditText for text-based search
+        // For now, search functionality is disabled
+        /*
+        searchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             
@@ -157,6 +161,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {}
         });
+        */
     }
     
     private void showOpportunityDetails(Opportunity opportunity) {

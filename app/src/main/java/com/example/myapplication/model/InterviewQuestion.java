@@ -27,6 +27,7 @@ public class InterviewQuestion {
     // Metadata
     private int timesAsked;
     private double averageScore;
+    private boolean isAnswered;
     
     // Constructors
     public InterviewQuestion() {
@@ -74,4 +75,7 @@ public class InterviewQuestion {
     
     public double getAverageScore() { return averageScore; }
     public void setAverageScore(double averageScore) { this.averageScore = averageScore; }
+    
+    public boolean getIsAnswered() { return isAnswered; }
+    public void setIsAnswered(boolean isAnswered) { this.isAnswered = isAnswered; }
 }

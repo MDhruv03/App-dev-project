@@ -100,4 +100,13 @@ public class AppSettings {
     public void setCrashReportingEnabled(boolean crashReportingEnabled) { 
         this.crashReportingEnabled = crashReportingEnabled; 
     }
+    
+    // Alias methods for backward compatibility
+    public void setDeadlineReminders(boolean enabled) {
+        setDeadlineNotifications(enabled);
+    }
+    
+    public void setInterviewReminders(boolean enabled) {
+        setInterviewNotifications(enabled);
+    }
 }

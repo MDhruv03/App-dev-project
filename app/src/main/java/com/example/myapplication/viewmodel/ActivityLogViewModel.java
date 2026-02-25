@@ -57,7 +57,9 @@ public class ActivityLogViewModel extends AndroidViewModel {
                 log.setActivityType(activityType);
                 log.setDescription(description);
                 log.setTimestamp(new Date());
-                log.setRelatedOpportunityId(relatedOpportunityId);
+                if (relatedOpportunityId != null) {
+                    log.setRelatedOpportunityId(relatedOpportunityId.intValue());
+                }
                 
                 activityLogDao.insert(log);
                 Logger.d(TAG, "Activity logged: " + activityType);

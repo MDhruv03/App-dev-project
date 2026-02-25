@@ -124,7 +124,9 @@ public abstract class BaseActivity extends AppCompatActivity {
      * Hide keyboard
      */
     protected void hideKeyboard() {
-        UIUtils.hideKeyboard(this);
+        View view = getCurrentFocus();
+        if (view == null) view = new View(this);
+        UIUtils.hideKeyboard(this, view);
     }
     
     @Override
