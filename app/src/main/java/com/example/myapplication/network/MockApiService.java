@@ -163,14 +163,6 @@ public class MockApiService {
         });
     }
     
-    // Callback interface
-    public interface ApiCallback<T> {
-        void onSuccess(T result);
-        default void onError(String error) {
-            // Default error handling
-        }
-    }
-    
     // Stats model
     public static class UserStats {
         public int totalApplications;
