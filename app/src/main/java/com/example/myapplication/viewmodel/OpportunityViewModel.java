@@ -34,7 +34,7 @@ public class OpportunityViewModel extends AndroidViewModel {
     
     // Load all opportunities
     public void loadAllOpportunities() {
-        isLoading.setValue(true);
+        isLoading.postValue(true);
         repository.getAllOpportunities(opportunities -> {
             isLoading.postValue(false);
             allOpportunities.postValue(opportunities);

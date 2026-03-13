@@ -25,7 +25,7 @@ import com.example.myapplication.model.UserPreferences;
     InterviewProgress.class,
     Notification.class,
     ActivityLog.class
-}, version = 1, exportSchema = false)
+}, version = 2, exportSchema = false)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
     
