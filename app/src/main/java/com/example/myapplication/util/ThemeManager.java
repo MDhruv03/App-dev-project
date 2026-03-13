@@ -5,6 +5,8 @@ import android.content.res.Configuration;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.example.myapplication.model.AppSettings;
+
 /**
  * Theme manager for handling dark mode and UI themes
  */
@@ -28,7 +30,8 @@ public class ThemeManager {
      * Apply theme based on settings
      */
     public void applyTheme() {
-        boolean darkModeEnabled = settingsManager.getSettings().isDarkModeEnabled();
+        AppSettings settings = settingsManager.getSettings();
+        boolean darkModeEnabled = settings != null && settings.isDarkModeEnabled();
         
         if (darkModeEnabled) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);

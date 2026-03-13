@@ -1,6 +1,7 @@
 package com.example.myapplication.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -39,6 +40,7 @@ public class InterviewProgress {
         this.isComplete = false;
     }
     
+    @Ignore
     public InterviewProgress(int userId, int questionId) {
         this();
         this.userId = userId;

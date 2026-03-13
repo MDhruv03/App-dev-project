@@ -1,6 +1,7 @@
 package com.example.myapplication.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -26,6 +27,7 @@ public class ActivityLog {
         this.timestamp = new Date();
     }
     
+    @Ignore
     public ActivityLog(String activityType, String description) {
         this();
         this.activityType = activityType;

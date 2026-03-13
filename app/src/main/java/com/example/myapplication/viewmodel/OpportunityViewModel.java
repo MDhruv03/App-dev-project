@@ -12,6 +12,7 @@ import com.example.myapplication.repository.OpportunityRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class OpportunityViewModel extends AndroidViewModel {
@@ -23,6 +24,8 @@ public class OpportunityViewModel extends AndroidViewModel {
     private final MutableLiveData<List<Opportunity>> filteredOpportunities = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    private final List<String> activeFilters = new ArrayList<>();
+    private String activeSearchQuery = "";
     
     public OpportunityViewModel(@NonNull Application application) {
         super(application);
@@ -35,7 +38,7 @@ public class OpportunityViewModel extends AndroidViewModel {
         repository.getAllOpportunities(opportunities -> {
             isLoading.postValue(false);
             allOpportunities.postValue(opportunities);
-            filteredOpportunities.postValue(opportunities);
+            applyFilters();
         });
     }
     
@@ -77,35 +80,63 @@ public class OpportunityViewModel extends AndroidViewModel {
     
     // Filter by type
     public void filterByType(String type) {
-        List<Opportunity> all = allOpportunities.getValue();
-        if (all == null) return;
-        
-        if (type == null || type.equals("all")) {
-            filteredOpportunities.setValue(all);
-        } else {
-            List<Opportunity> filtered = all.stream()
-                    .filter(o -> o.getType().equalsIgnoreCase(type))
-                    .collect(Collectors.toList());
-            filteredOpportunities.setValue(filtered);
+        activeFilters.clear();
+        if (type != null && !type.equalsIgnoreCase("all")) {
+            activeFilters.add(type.toLowerCase(Locale.ROOT));
         }
+        applyFilters();
     }
     
     // Search opportunities
     public void searchOpportunities(String query) {
-        List<Opportunity> all = allOpportunities.getValue();
-        if (all == null) return;
-        
-        if (query == null || query.trim().isEmpty()) {
-            filteredOpportunities.setValue(all);
-        } else {
-            String lowerQuery = query.toLowerCase();
-            List<Opportunity> filtered = all.stream()
-                    .filter(o -> o.getTitle().toLowerCase().contains(lowerQuery) ||
-                               o.getCompany().toLowerCase().contains(lowerQuery) ||
-                               o.getRole().toLowerCase().contains(lowerQuery))
-                    .collect(Collectors.toList());
-            filteredOpportunities.setValue(filtered);
+        activeSearchQuery = query == null ? "" : query.trim();
+        applyFilters();
+    }
+
+    public void updateFilters(List<String> filters) {
+        activeFilters.clear();
+        if (filters != null) {
+            for (String filter : filters) {
+                if (filter != null && !filter.trim().isEmpty()) {
+                    activeFilters.add(filter.toLowerCase(Locale.ROOT));
+                }
+            }
         }
+        applyFilters();
+    }
+
+    private void applyFilters() {
+        List<Opportunity> all = allOpportunities.getValue();
+        if (all == null) {
+            filteredOpportunities.postValue(new ArrayList<>());
+            return;
+        }
+
+        String query = activeSearchQuery.toLowerCase(Locale.ROOT);
+        boolean requireRemote = activeFilters.contains("remote");
+        boolean requirePaid = activeFilters.contains("paid");
+
+        List<String> typeFilters = activeFilters.stream()
+                .filter(filter -> filter.equals("internship") || filter.equals("job") || filter.equals("hackathon"))
+                .collect(Collectors.toList());
+
+        List<Opportunity> filtered = all.stream()
+                .filter(o -> typeFilters.isEmpty() || typeFilters.contains(o.getType().toLowerCase(Locale.ROOT)))
+                .filter(o -> !requireRemote || o.isRemote())
+                .filter(o -> !requirePaid || o.isPaid())
+                .filter(o -> query.isEmpty() ||
+                        safe(o.getTitle()).contains(query) ||
+                        safe(o.getCompany()).contains(query) ||
+                        safe(o.getRole()).contains(query) ||
+                        safe(o.getLocation()).contains(query) ||
+                        safe(o.getDescription()).contains(query))
+                .collect(Collectors.toList());
+
+        filteredOpportunities.postValue(filtered);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT);
     }
     
     // Insert opportunity

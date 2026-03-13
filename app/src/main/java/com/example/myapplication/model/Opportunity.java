@@ -1,6 +1,7 @@
 package com.example.myapplication.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -54,6 +55,7 @@ public class Opportunity {
         this.isApplied = false;
     }
     
+    @Ignore
     public Opportunity(String title, String company, String type, String role, 
                       String location, boolean isRemote, boolean isPaid) {
         this();

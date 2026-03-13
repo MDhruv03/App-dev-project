@@ -18,12 +18,18 @@ import com.example.myapplication.viewmodel.OpportunityViewModel;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
 public class SavedFragment extends Fragment {
     
     private ChipGroup filterChipGroup;
     private RecyclerView recyclerViewSaved;
     private OpportunityViewModel viewModel;
     private OpportunityAdapter adapter;
+    private List<Opportunity> savedSource = new ArrayList<>();
     
     @Nullable
     @Override
@@ -53,7 +59,8 @@ public class SavedFragment extends Fragment {
         
         viewModel.getSavedOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
             if (opportunities != null) {
-                adapter.setOpportunities(opportunities);
+                savedSource = opportunities;
+                applySavedFilters();
             }
         });
     }
@@ -69,6 +76,7 @@ public class SavedFragment extends Fragment {
             
             @Override
             public void onApplyClick(Opportunity opportunity) {
+                viewModel.markAsApplied(opportunity);
                 Toast.makeText(requireContext(), "Applied to " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
             }
             
@@ -83,7 +91,36 @@ public class SavedFragment extends Fragment {
     
     private void setupFilters() {
         filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            viewModel.loadSavedOpportunities();
+            applySavedFilters();
         });
+    }
+
+    private void applySavedFilters() {
+        List<Integer> checkedIds = filterChipGroup.getCheckedChipIds();
+        if (checkedIds == null || checkedIds.isEmpty()) {
+            adapter.setOpportunities(savedSource);
+            return;
+        }
+
+        List<String> typeFilters = new ArrayList<>();
+        for (Integer checkedId : checkedIds) {
+            Chip chip = filterChipGroup.findViewById(checkedId);
+            if (chip != null) {
+                String label = chip.getText().toString().toLowerCase(Locale.ROOT);
+                if (!"all".equals(label)) {
+                    typeFilters.add(label);
+                }
+            }
+        }
+
+        if (typeFilters.isEmpty()) {
+            adapter.setOpportunities(savedSource);
+            return;
+        }
+
+        List<Opportunity> filtered = savedSource.stream()
+                .filter(opp -> typeFilters.contains(opp.getType().toLowerCase(Locale.ROOT)))
+                .collect(Collectors.toList());
+        adapter.setOpportunities(filtered);
     }
 }

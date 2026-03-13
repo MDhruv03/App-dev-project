@@ -34,9 +34,17 @@ public class SettingsManager {
      */
     private void loadSettings() {
         String json = preferencesManager.getString(SETTINGS_KEY, null);
-        if (json != null) {
+        if (json == null || json.trim().isEmpty()) {
+            settings = new AppSettings();
+            return;
+        }
+
+        try {
             settings = gson.fromJson(json, AppSettings.class);
-        } else {
+            if (settings == null) {
+                settings = new AppSettings();
+            }
+        } catch (Exception ignored) {
             settings = new AppSettings();
         }
     }
@@ -61,6 +69,9 @@ public class SettingsManager {
      * Get current settings
      */
     public AppSettings getSettings() {
+        if (settings == null) {
+            settings = new AppSettings();
+        }
         return settings;
     }
     

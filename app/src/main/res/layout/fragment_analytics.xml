@@ -154,13 +154,11 @@
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp">
 
-            <!-- TODO: Add PieChart here -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Chart will be displayed here"
-                android:textColor="@color/on_surface_variant" />
+            <com.github.mikephil.charting.charts.PieChart
+                android:id="@+id/chart_application_status"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="12dp" />
 
         </com.google.android.material.card.MaterialCardView>
 

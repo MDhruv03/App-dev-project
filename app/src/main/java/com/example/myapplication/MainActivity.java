@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import com.example.myapplication.util.DiagnosticLogger;
 import com.example.myapplication.ui.fragments.AIInterviewFragment;
 import com.example.myapplication.ui.fragments.AnalyticsFragment;
 import com.example.myapplication.ui.fragments.HomeFragment;
@@ -15,39 +16,48 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        
-        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-        
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                .replace(R.id.nav_host_fragment, new HomeFragment())
-                .commit();
-        }
-        
-        bottomNav.setOnItemSelectedListener(item -> {
-            Fragment fragment = null;
-            int itemId = item.getItemId();
-            
-            if (itemId == R.id.navigation_home) {
-                fragment = new HomeFragment();
-            } else if (itemId == R.id.navigation_saved) {
-                fragment = new SavedFragment();
-            } else if (itemId == R.id.navigation_tracker) {
-                fragment = new TrackerFragment();
-            } else if (itemId == R.id.navigation_ai) {
-                fragment = new AIInterviewFragment();
-            } else if (itemId == R.id.navigation_analytics) {
-                fragment = new AnalyticsFragment();
-            }
-            
-            if (fragment != null) {
+        DiagnosticLogger.log("main_activity_onCreate_start");
+        try {
+            setContentView(R.layout.activity_main);
+
+            BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+
+            if (savedInstanceState == null) {
+                DiagnosticLogger.log("main_activity_default_fragment_home");
                 getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.nav_host_fragment, fragment)
+                    .replace(R.id.nav_host_fragment, new HomeFragment())
                     .commit();
-                return true;
             }
-            return false;
-        });
+
+            bottomNav.setOnItemSelectedListener(item -> {
+                Fragment fragment = null;
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.navigation_home) {
+                    fragment = new HomeFragment();
+                } else if (itemId == R.id.navigation_saved) {
+                    fragment = new SavedFragment();
+                } else if (itemId == R.id.navigation_tracker) {
+                    fragment = new TrackerFragment();
+                } else if (itemId == R.id.navigation_ai) {
+                    fragment = new AIInterviewFragment();
+                } else if (itemId == R.id.navigation_analytics) {
+                    fragment = new AnalyticsFragment();
+                }
+
+                if (fragment != null) {
+                    DiagnosticLogger.log("main_activity_nav_select:" + itemId);
+                    getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.nav_host_fragment, fragment)
+                        .commit();
+                    return true;
+                }
+                return false;
+            });
+            DiagnosticLogger.log("main_activity_onCreate_complete");
+        } catch (Throwable throwable) {
+            DiagnosticLogger.logError("main_activity_onCreate_failure", throwable);
+            throw throwable;
+        }
     }
 }

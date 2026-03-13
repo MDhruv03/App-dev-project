@@ -21,11 +21,15 @@ import com.example.myapplication.model.Opportunity;
 import com.example.myapplication.viewmodel.OpportunityViewModel;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.search.SearchBar;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class HomeFragment extends Fragment {
     
-    private SearchBar searchBar;
+    private TextInputEditText searchInput;
     private ChipGroup filterChipGroup;
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerViewRecommended;
@@ -57,7 +61,7 @@ public class HomeFragment extends Fragment {
     }
     
     private void initializeViews(View view) {
-        searchBar = view.findViewById(R.id.search_bar);
+        searchInput = view.findViewById(R.id.search_input);
         filterChipGroup = view.findViewById(R.id.filter_chip_group);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
         recyclerViewRecommended = view.findViewById(R.id.recycler_recommended);
@@ -132,24 +136,19 @@ public class HomeFragment extends Fragment {
     
     private void setupFilters() {
         filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            String type = "all";
-            if (!checkedIds.isEmpty()) {
-                int checkedId = checkedIds.get(0);
+            List<String> activeFilters = new ArrayList<>();
+            for (Integer checkedId : checkedIds) {
                 Chip chip = group.findViewById(checkedId);
                 if (chip != null) {
-                    type = chip.getText().toString().toLowerCase();
+                    activeFilters.add(chip.getText().toString().toLowerCase(Locale.ROOT));
                 }
             }
-            viewModel.filterByType(type);
+            viewModel.updateFilters(activeFilters);
         });
     }
     
     private void setupSearch() {
-        // TODO: Material SearchBar doesn't support TextWatcher directly
-        // Need to refactor to use SearchView or EditText for text-based search
-        // For now, search functionality is disabled
-        /*
-        searchBar.addTextChangedListener(new TextWatcher() {
+        searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             
@@ -161,7 +160,6 @@ public class HomeFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {}
         });
-        */
     }
     
     private void showOpportunityDetails(Opportunity opportunity) {

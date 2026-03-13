@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.fragments;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.adapter.InterviewQuestionAdapter;
 import com.example.myapplication.model.InterviewQuestion;
 import com.example.myapplication.util.InterviewDataGenerator;
+import com.example.myapplication.ui.activities.InterviewActivity;
 import com.example.myapplication.viewmodel.InterviewViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -122,7 +124,9 @@ public class AIInterviewFragment extends Fragment {
             Toast.makeText(requireContext(), 
                 "Starting " + selectedDomain + " interview...", 
                 Toast.LENGTH_LONG).show();
-            // TODO: Launch interview activity
+            Intent intent = new Intent(requireContext(), InterviewActivity.class);
+            intent.putExtra("DOMAIN", selectedDomain);
+            startActivity(intent);
         });
     }
     

@@ -1,6 +1,8 @@
 package com.example.myapplication;
 
 import android.app.Application;
+import android.app.Activity;
+import android.os.Bundle;
 
 import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.model.Opportunity;
@@ -8,6 +10,7 @@ import com.example.myapplication.network.MockApiService;
 import com.example.myapplication.util.AnalyticsTracker;
 import com.example.myapplication.util.CacheManager;
 import com.example.myapplication.util.CrashHandler;
+import com.example.myapplication.util.DiagnosticLogger;
 import com.example.myapplication.util.Logger;
 import com.example.myapplication.util.NotificationHelper;
 import com.example.myapplication.util.SampleDataGenerator;
@@ -25,24 +28,77 @@ public class OpportunityHubApplication extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
+
+        DiagnosticLogger.init(this);
+        DiagnosticLogger.log("application_onCreate_start");
         
         // Initialize crash handler
         CrashHandler.install(this);
         Logger.d("App", "OpportunityHub Application Starting...");
+        DiagnosticLogger.log("crash_handler_installed");
         
         // Initialize core components
-        initializeLogger();
-        initializeTheme();
-        initializeCacheManager();
-        initializeAnalytics();
-        initializeNotifications();
-        initializeSettings();
+        safeInit("logger", this::initializeLogger);
+        safeInit("theme", this::initializeTheme);
+        safeInit("cache", this::initializeCacheManager);
+        safeInit("analytics", this::initializeAnalytics);
+        safeInit("notifications", this::initializeNotifications);
+        safeInit("settings", this::initializeSettings);
         
         // Initialize Mock API Service
-        MockApiService.getInstance();
+        safeInit("mock-api", MockApiService::getInstance);
         
         // Initialize database with sample data
-        initializeDatabase();
+        safeInit("database", this::initializeDatabase);
+
+        registerLifecycleDiagnostics();
+        DiagnosticLogger.log("application_onCreate_complete");
+    }
+
+    private void safeInit(String name, Runnable initBlock) {
+        try {
+            DiagnosticLogger.log("init_start:" + name);
+            initBlock.run();
+            DiagnosticLogger.log("init_success:" + name);
+        } catch (Exception e) {
+            Logger.e("App", "Startup init failed: " + name, e);
+            DiagnosticLogger.logError("init_failure:" + name, e);
+        }
+    }
+
+    private void registerLifecycleDiagnostics() {
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+                DiagnosticLogger.log("activity_created:" + activity.getClass().getSimpleName());
+            }
+
+            @Override
+            public void onActivityStarted(Activity activity) {
+                DiagnosticLogger.log("activity_started:" + activity.getClass().getSimpleName());
+            }
+
+            @Override
+            public void onActivityResumed(Activity activity) {
+                DiagnosticLogger.log("activity_resumed:" + activity.getClass().getSimpleName());
+            }
+
+            @Override
+            public void onActivityPaused(Activity activity) {
+            }
+
+            @Override
+            public void onActivityStopped(Activity activity) {
+            }
+
+            @Override
+            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+            }
+
+            @Override
+            public void onActivityDestroyed(Activity activity) {
+            }
+        });
     }
     
     /**

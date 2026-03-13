@@ -39,6 +39,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     
     @Override
     public void uncaughtException(Thread thread, Throwable throwable) {
+        DiagnosticLogger.logError("uncaught_exception_thread:" + (thread == null ? "unknown" : thread.getName()), throwable);
         try {
             // Log crash
             saveCrashLog(throwable);
@@ -63,7 +64,11 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     private void saveCrashLog(Throwable throwable) {
         try {
             // Create crash directory
-            File crashDir = new File(context.getExternalFilesDir(null), CRASH_DIR);
+            File baseDir = context.getExternalFilesDir(null);
+            if (baseDir == null) {
+                baseDir = context.getFilesDir();
+            }
+            File crashDir = new File(baseDir, CRASH_DIR);
             if (!crashDir.exists()) {
                 crashDir.mkdirs();
             }

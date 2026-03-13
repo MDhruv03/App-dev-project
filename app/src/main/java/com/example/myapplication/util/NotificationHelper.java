@@ -32,6 +32,9 @@ public class NotificationHelper {
     public static void createNotificationChannels(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager manager = context.getSystemService(NotificationManager.class);
+            if (manager == null) {
+                return;
+            }
             
             // Deadlines channel (High priority)
             NotificationChannel deadlinesChannel = new NotificationChannel(

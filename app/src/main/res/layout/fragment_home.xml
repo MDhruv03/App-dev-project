@@ -16,14 +16,23 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Search Bar -->
-            <com.google.android.material.search.SearchBar
-                android:id="@+id/search_bar"
+            <!-- Search Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/search_input_layout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
                 android:hint="@string/search_opportunities"
-                app:boxStrokeWidth="0dp"
-                app:boxStrokeWidthFocused="0dp" />
+                app:endIconMode="clear_text">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/search_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text" />
+
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Filter Chips -->
             <HorizontalScrollView

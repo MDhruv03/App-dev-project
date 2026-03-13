@@ -1,6 +1,7 @@
 package com.example.myapplication.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 /**
@@ -23,6 +24,7 @@ public class Notification {
         this.isRead = false;
     }
     
+    @Ignore
     public Notification(String type, String title, String message) {
         this();
         this.type = type;

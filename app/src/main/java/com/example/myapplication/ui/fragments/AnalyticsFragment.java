@@ -9,12 +9,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.core.content.ContextCompat;
 import com.example.myapplication.R;
 import com.example.myapplication.model.Application;
+import com.example.myapplication.model.InterviewProgress;
 import com.example.myapplication.viewmodel.AnalyticsViewModel;
 import com.example.myapplication.viewmodel.ApplicationViewModel;
 import com.example.myapplication.viewmodel.InterviewViewModel;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import java.util.List;
+import java.util.ArrayList;
 
 public class AnalyticsFragment extends Fragment {
     
@@ -25,6 +32,7 @@ public class AnalyticsFragment extends Fragment {
     private TextView tvInterviewReadiness;
     private TextView tvPracticeAttempts;
     private TextView tvAverageScore;
+    private PieChart statusChart;
     
     private ApplicationViewModel applicationViewModel;
     private InterviewViewModel interviewViewModel;
@@ -53,6 +61,7 @@ public class AnalyticsFragment extends Fragment {
         tvInterviewReadiness = view.findViewById(R.id.tv_interview_readiness);
         tvPracticeAttempts = view.findViewById(R.id.tv_practice_attempts);
         tvAverageScore = view.findViewById(R.id.tv_average_score);
+        statusChart = view.findViewById(R.id.chart_application_status);
     }
     
     private void setupViewModels() {
@@ -102,6 +111,8 @@ public class AnalyticsFragment extends Fragment {
             .filter(app -> "accepted".equals(app.getStatus()))
             .count();
         tvOffersReceived.setText(String.valueOf(offerCount));
+
+        updateStatusChart(applications);
         
         // Calculate success rate
         if (total > 0) {
@@ -112,14 +123,18 @@ public class AnalyticsFragment extends Fragment {
         }
     }
     
-    private void updateInterviewStats(List<?> attempts) {
+    private void updateInterviewStats(List<InterviewProgress> attempts) {
         int attemptCount = attempts.size();
         tvPracticeAttempts.setText(String.valueOf(attemptCount));
         
         if (attemptCount > 0) {
             // Calculate average score and readiness
-            double avgScore = 75.0; // Placeholder - would calculate from actual attempts
-            int readiness = Math.min((attemptCount * 10) + (int)(avgScore / 2), 100);
+            double totalScore = 0.0;
+            for (InterviewProgress attempt : attempts) {
+                totalScore += attempt.getScore();
+            }
+            double avgScore = totalScore / attemptCount;
+            int readiness = Math.min((attemptCount * 10) + (int) (avgScore / 2), 100);
             
             tvInterviewReadiness.setText(readiness + "%");
             tvAverageScore.setText(String.format("%.1f/100", avgScore));
@@ -127,5 +142,73 @@ public class AnalyticsFragment extends Fragment {
             tvInterviewReadiness.setText("0%");
             tvAverageScore.setText("0.0/100");
         }
+    }
+
+    private void updateStatusChart(List<Application> applications) {
+        int savedCount = 0;
+        int appliedCount = 0;
+        int interviewCount = 0;
+        int rejectedCount = 0;
+        int acceptedCount = 0;
+
+        for (Application app : applications) {
+            String status = app.getStatus();
+            if ("saved".equals(status)) {
+                savedCount++;
+            } else if ("applied".equals(status)) {
+                appliedCount++;
+            } else if ("interview".equals(status)) {
+                interviewCount++;
+            } else if ("rejected".equals(status)) {
+                rejectedCount++;
+            } else if ("accepted".equals(status)) {
+                acceptedCount++;
+            }
+        }
+
+        List<PieEntry> entries = new ArrayList<>();
+        List<Integer> colors = new ArrayList<>();
+        if (savedCount > 0) {
+            entries.add(new PieEntry(savedCount, "Saved"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.chip_saved));
+        }
+        if (appliedCount > 0) {
+            entries.add(new PieEntry(appliedCount, "Applied"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.chip_applied));
+        }
+        if (interviewCount > 0) {
+            entries.add(new PieEntry(interviewCount, "Interview"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.chip_interview));
+        }
+        if (rejectedCount > 0) {
+            entries.add(new PieEntry(rejectedCount, "Rejected"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.chip_rejected));
+        }
+        if (acceptedCount > 0) {
+            entries.add(new PieEntry(acceptedCount, "Accepted"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.chip_accepted));
+        }
+
+        if (entries.isEmpty()) {
+            statusChart.clear();
+            statusChart.setCenterText("No data");
+            statusChart.invalidate();
+            return;
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(colors);
+        dataSet.setValueTextSize(12f);
+        dataSet.setValueTextColor(ContextCompat.getColor(requireContext(), R.color.on_background));
+
+        PieData data = new PieData(dataSet);
+        statusChart.setData(data);
+        statusChart.setUsePercentValues(false);
+        statusChart.getDescription().setEnabled(false);
+        statusChart.setDrawEntryLabels(true);
+        statusChart.setEntryLabelColor(ContextCompat.getColor(requireContext(), R.color.on_background));
+        statusChart.setCenterText("Status Breakdown");
+        statusChart.setCenterTextSize(14f);
+        statusChart.invalidate();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.myapplication.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -48,6 +49,7 @@ public class Application {
         this.status = "saved";
     }
     
+    @Ignore
     public Application(int opportunityId, int userId) {
         this();
         this.opportunityId = opportunityId;
