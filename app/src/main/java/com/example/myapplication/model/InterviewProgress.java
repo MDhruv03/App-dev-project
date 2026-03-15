@@ -30,6 +30,22 @@ public class InterviewProgress {
     
     // Weak areas identified
     private List<String> weakTopics;
+
+    // Runtime-only fields for richer feedback UI
+    @Ignore
+    private String strengths;
+
+    @Ignore
+    private String improvements;
+
+    @Ignore
+    private String verdict;
+
+    @Ignore
+    private String evaluationSource;
+
+    @Ignore
+    private boolean aiEvaluated;
     
     // Timestamps
     private Date attemptedAt;
@@ -79,6 +95,21 @@ public class InterviewProgress {
     
     public List<String> getWeakTopics() { return weakTopics; }
     public void setWeakTopics(List<String> weakTopics) { this.weakTopics = weakTopics; }
+
+    public String getStrengths() { return strengths; }
+    public void setStrengths(String strengths) { this.strengths = strengths; }
+
+    public String getImprovements() { return improvements; }
+    public void setImprovements(String improvements) { this.improvements = improvements; }
+
+    public String getVerdict() { return verdict; }
+    public void setVerdict(String verdict) { this.verdict = verdict; }
+
+    public String getEvaluationSource() { return evaluationSource; }
+    public void setEvaluationSource(String evaluationSource) { this.evaluationSource = evaluationSource; }
+
+    public boolean isAiEvaluated() { return aiEvaluated; }
+    public void setAiEvaluated(boolean aiEvaluated) { this.aiEvaluated = aiEvaluated; }
     
     public Date getAttemptedAt() { return attemptedAt; }
     public void setAttemptedAt(Date attemptedAt) { this.attemptedAt = attemptedAt; }

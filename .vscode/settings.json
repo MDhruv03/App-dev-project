@@ -1,0 +1,32 @@
+{
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.version": "wrapper",
+  "java.import.gradle.offline.enabled": false,
+  "java.import.gradle.arguments": "--refresh-dependencies",
+  "java.jdt.ls.java.home": "C:/Users/lkman/.jdk/jdk-17.0.16",
+  "java.import.gradle.java.home": "C:/Users/lkman/.jdk/jdk-17.0.16",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "C:/Users/lkman/.jdk/jdk-17.0.16"
+    }
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.gradle.jvmArguments": "-Xmx2G -XX:+UseG1GC",
+  "java.autobuild.enabled": true,
+  "java.server.launchMode": "Standard",
+  "java.project.importOnFirstTimeStartup": "automatic",
+  "java.errors.incompleteClasspath.severity": "ignore",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "gradle.nestedProjects": true,
+  "gradle.reuseTerminals": true,
+  "search.exclude": {
+    "**/build": true,
+    "**/.gradle": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.gradle/**": true
+  }
+}

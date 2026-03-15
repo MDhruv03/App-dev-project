@@ -158,6 +158,14 @@
 
         </com.google.android.material.chip.ChipGroup>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_take_skill_quiz"
+            style="@style/Widget.App.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Take Skill Quiz 🧠" />
+
         <!-- Start Interview Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_start_interview"

@@ -42,6 +42,12 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.MyApplication" />
 
+        <activity
+            android:name=".ui.activities.QuizActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MyApplication" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -19,6 +19,11 @@
         android:id="@+id/navigation_ai"
         android:icon="@android:drawable/ic_menu_edit"
         android:title="@string/ai_interview" />
+
+    <item
+        android:id="@+id/navigation_roadmap"
+        android:icon="@android:drawable/ic_menu_directions"
+        android:title="Roadmap" />
     
     <item
         android:id="@+id/navigation_analytics"

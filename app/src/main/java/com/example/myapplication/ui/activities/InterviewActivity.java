@@ -1,6 +1,8 @@
 package com.example.myapplication.ui.activities;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -17,6 +19,8 @@ import com.example.myapplication.model.InterviewQuestion;
 import com.example.myapplication.viewmodel.InterviewViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -34,6 +38,13 @@ public class InterviewActivity extends AppCompatActivity {
     private MaterialButton btnNext;
     private MaterialButton btnFinish;
     private LinearProgressIndicator progressIndicator;
+    private MaterialCardView cardFeedback;
+    private TextView tvFeedbackScore;
+    private Chip chipVerdict;
+    private Chip chipEvaluationTag;
+    private TextView tvFeedbackText;
+    private TextView tvStrengths;
+    private TextView tvImprovements;
 
     private double sessionTotalScore = 0.0;
     private int sessionAnsweredCount = 0;
@@ -69,6 +80,13 @@ public class InterviewActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btn_next);
         btnFinish = findViewById(R.id.btn_finish);
         progressIndicator = findViewById(R.id.progress_indicator);
+        cardFeedback = findViewById(R.id.card_feedback);
+        tvFeedbackScore = findViewById(R.id.tv_feedback_score);
+        chipVerdict = findViewById(R.id.chip_verdict);
+        chipEvaluationTag = findViewById(R.id.chip_evaluation_tag);
+        tvFeedbackText = findViewById(R.id.tv_feedback_text);
+        tvStrengths = findViewById(R.id.tv_strengths);
+        tvImprovements = findViewById(R.id.tv_improvements);
     }
     
     private void setupViewModel() {
@@ -109,6 +127,7 @@ public class InterviewActivity extends AppCompatActivity {
         btnSubmit.setVisibility(View.VISIBLE);
         btnNext.setVisibility(View.GONE);
         btnFinish.setVisibility(View.GONE);
+        cardFeedback.setVisibility(View.GONE);
         
         progressIndicator.setMax(total);
         progressIndicator.setProgress(currentNum);
@@ -136,20 +155,59 @@ public class InterviewActivity extends AppCompatActivity {
     }
     
     private void showFeedback(InterviewProgress progress) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Score: " + String.format("%.1f", progress.getScore()) + "/100");
-        builder.setMessage(progress.getFeedback());
-        builder.setPositiveButton("Continue", (dialog, which) -> {
-            btnSubmit.setVisibility(View.GONE);
-            
-            if (viewModel.getCurrentQuestionNumber() < viewModel.getTotalQuestions()) {
-                btnNext.setVisibility(View.VISIBLE);
-            } else {
-                btnFinish.setVisibility(View.VISIBLE);
-            }
-        });
-        builder.setCancelable(false);
-        builder.show();
+        cardFeedback.setVisibility(View.VISIBLE);
+
+        tvFeedbackScore.setText(String.format("%.1f / 100", progress.getScore()));
+        chipVerdict.setText(progress.getVerdict() == null ? "Fair" : progress.getVerdict());
+        chipEvaluationTag.setText(progress.isAiEvaluated() ? "AI Evaluated ✨" : "Local Evaluation");
+        tvFeedbackText.setText(progress.getFeedback());
+        tvStrengths.setText("✔ " + safe(progress.getStrengths(), "You gave a valid attempt with relevant context."));
+        tvImprovements.setText("⚠ " + safe(progress.getImprovements(), "Add key concepts and specific examples."));
+
+        styleVerdictChip(progress.getVerdict());
+        styleSourceChip(progress.isAiEvaluated());
+
+        btnSubmit.setVisibility(View.GONE);
+        if (viewModel.getCurrentQuestionNumber() < viewModel.getTotalQuestions()) {
+            btnNext.setVisibility(View.VISIBLE);
+        } else {
+            btnFinish.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void styleVerdictChip(String verdict) {
+        String normalized = verdict == null ? "Fair" : verdict.trim();
+        int backgroundColor;
+        switch (normalized) {
+            case "Excellent":
+                backgroundColor = Color.parseColor("#1E8E3E");
+                break;
+            case "Good":
+                backgroundColor = Color.parseColor("#1565C0");
+                break;
+            case "Poor":
+                backgroundColor = Color.parseColor("#C62828");
+                break;
+            case "Fair":
+            default:
+                backgroundColor = Color.parseColor("#EF6C00");
+                break;
+        }
+        chipVerdict.setChipBackgroundColor(ColorStateList.valueOf(backgroundColor));
+        chipVerdict.setTextColor(Color.WHITE);
+    }
+
+    private void styleSourceChip(boolean aiEvaluated) {
+        int backgroundColor = aiEvaluated ? Color.parseColor("#7B1FA2") : Color.parseColor("#455A64");
+        chipEvaluationTag.setChipBackgroundColor(ColorStateList.valueOf(backgroundColor));
+        chipEvaluationTag.setTextColor(Color.WHITE);
+    }
+
+    private String safe(String value, String fallback) {
+        if (value == null || value.trim().isEmpty()) {
+            return fallback;
+        }
+        return value.trim();
     }
     
     private void nextQuestion() {

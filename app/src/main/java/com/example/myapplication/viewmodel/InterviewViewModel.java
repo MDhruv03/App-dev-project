@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.myapplication.model.InterviewProgress;
 import com.example.myapplication.model.InterviewQuestion;
+import com.example.myapplication.network.GroqApiClient;
 import com.example.myapplication.repository.InterviewRepository;
 
 import java.util.List;
@@ -93,26 +94,43 @@ public class InterviewViewModel extends AndroidViewModel {
     public void submitAnswer(String answer, OnAnswerEvaluatedListener listener) {
         InterviewQuestion question = currentQuestion.getValue();
         if (question == null) return;
-        
-        // Evaluate answer
-        InterviewProgress progress = evaluateAnswer(question, answer);
-        progress.setUserId(DEFAULT_USER_ID);
-        progress.setQuestionId(question.getId());
-        
-        // Save to database
-        repository.insertProgress(progress, success -> {
-            if (success) {
-                loadUserProgress();
-                loadUserStatistics();
-                if (listener != null) {
-                    listener.onEvaluated(progress);
+
+        InterviewProgress localProgress = evaluateAnswerLocally(question, answer);
+        localProgress.setUserId(DEFAULT_USER_ID);
+        localProgress.setQuestionId(question.getId());
+
+        GroqApiClient.evaluateAnswer(
+            question.getQuestion(),
+            answer,
+            question.getTopic(),
+            question.getDifficulty(),
+            new GroqApiClient.GroqCallback() {
+                @Override
+                public void onSuccess(double score, String feedback, String strengths, String improvements, String verdict) {
+                    localProgress.setScore(score);
+                    localProgress.setFeedback(feedback);
+                    localProgress.setStrengths(strengths);
+                    localProgress.setImprovements(improvements);
+                    localProgress.setVerdict(resolveVerdict(verdict, score));
+                    localProgress.setAiEvaluated(true);
+                    localProgress.setEvaluationSource("AI Evaluated ✨");
+                    localProgress.setComplete(true);
+
+                    saveProgress(localProgress, listener);
+                }
+
+                @Override
+                public void onError(String message) {
+                    localProgress.setAiEvaluated(false);
+                    localProgress.setEvaluationSource("Local Evaluation");
+                    saveProgress(localProgress, listener);
                 }
             }
-        });
+        );
     }
-    
-    // Evaluate answer (simple keyword matching)
-    private InterviewProgress evaluateAnswer(InterviewQuestion question, String answer) {
+
+    // Evaluate answer (simple keyword matching fallback)
+    private InterviewProgress evaluateAnswerLocally(InterviewQuestion question, String answer) {
         InterviewProgress progress = new InterviewProgress();
         progress.setUserAnswer(answer);
         
@@ -122,6 +140,12 @@ public class InterviewViewModel extends AndroidViewModel {
             progress.setFeedback("Your answer has been recorded. Keep practicing!");
             progress.setMatchedKeywords(0);
             progress.setTotalKeywords(0);
+            progress.setStrengths("You attempted the question and shared a structured response.");
+            progress.setImprovements("Add concrete technical details and examples for stronger impact.");
+            progress.setVerdict(resolveVerdict(null, progress.getScore()));
+            progress.setAiEvaluated(false);
+            progress.setEvaluationSource("Local Evaluation");
+            progress.setComplete(true);
             return progress;
         }
         
@@ -164,9 +188,81 @@ public class InterviewViewModel extends AndroidViewModel {
         }
         
         progress.setFeedback(feedback);
+        progress.setStrengths(buildStrengths(answer, matchedCount, keywords.size()));
+        progress.setImprovements(buildImprovements(answer, keywords));
+        progress.setVerdict(resolveVerdict(null, score));
+        progress.setAiEvaluated(false);
+        progress.setEvaluationSource("Local Evaluation");
         progress.setComplete(true);
         
         return progress;
+    }
+
+    private void saveProgress(InterviewProgress progress, OnAnswerEvaluatedListener listener) {
+        repository.insertProgress(progress, success -> {
+            if (success) {
+                loadUserProgress();
+                loadUserStatistics();
+            }
+            if (listener != null) {
+                listener.onEvaluated(progress);
+            }
+        });
+    }
+
+    private String resolveVerdict(String verdict, double score) {
+        if (verdict != null) {
+            String trimmed = verdict.trim();
+            if (
+                trimmed.equalsIgnoreCase("Excellent")
+                    || trimmed.equalsIgnoreCase("Good")
+                    || trimmed.equalsIgnoreCase("Fair")
+                    || trimmed.equalsIgnoreCase("Poor")
+            ) {
+                return capitalize(trimmed);
+            }
+        }
+
+        if (score >= 85) return "Excellent";
+        if (score >= 65) return "Good";
+        if (score >= 45) return "Fair";
+        return "Poor";
+    }
+
+    private String buildStrengths(String answer, int matchedCount, int totalKeywords) {
+        int answerLength = answer == null ? 0 : answer.trim().length();
+        if (matchedCount >= Math.max(1, (int) (0.7 * totalKeywords))) {
+            return "Strong coverage of key concepts and clear topic understanding.";
+        }
+        if (answerLength > 120) {
+            return "Good effort with a detailed attempt and relevant technical context.";
+        }
+        return "You attempted the core idea and provided a concise response.";
+    }
+
+    private String buildImprovements(String answer, List<String> keywords) {
+        String lowerAnswer = answer == null ? "" : answer.toLowerCase();
+        StringBuilder missing = new StringBuilder();
+        for (String keyword : keywords) {
+            if (!lowerAnswer.contains(keyword.toLowerCase())) {
+                if (missing.length() > 0) {
+                    missing.append(", ");
+                }
+                missing.append(keyword);
+            }
+        }
+
+        if (missing.length() == 0) {
+            return "Add one practical example and discuss trade-offs to make the answer interview-ready.";
+        }
+        return "Include these points for a stronger answer: " + missing;
+    }
+
+    private String capitalize(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
     }
     
     // Reset interview

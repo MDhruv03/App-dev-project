@@ -13,6 +13,7 @@ import com.example.myapplication.ui.fragments.AIInterviewFragment;
 import com.example.myapplication.ui.fragments.AnalyticsFragment;
 import com.example.myapplication.ui.fragments.HomeFragment;
 import com.example.myapplication.ui.fragments.ProfileFragment;
+import com.example.myapplication.ui.fragments.RoadmapFragment;
 import com.example.myapplication.ui.fragments.SavedFragment;
 import com.example.myapplication.ui.fragments.TrackerFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
                     fragment = new TrackerFragment();
                 } else if (itemId == R.id.navigation_ai) {
                     fragment = new AIInterviewFragment();
+                } else if (itemId == R.id.navigation_roadmap) {
+                    fragment = new RoadmapFragment();
                 } else if (itemId == R.id.navigation_analytics) {
                     fragment = new AnalyticsFragment();
                 } else if (itemId == R.id.navigation_profile) {

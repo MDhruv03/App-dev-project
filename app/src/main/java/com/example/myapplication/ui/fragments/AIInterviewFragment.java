@@ -16,8 +16,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
 import com.example.myapplication.adapter.InterviewQuestionAdapter;
 import com.example.myapplication.model.InterviewQuestion;
-import com.example.myapplication.util.InterviewDataGenerator;
+import com.example.myapplication.model.UserProfile;
+import com.example.myapplication.repository.UserProfileRepository;
 import com.example.myapplication.ui.activities.InterviewActivity;
+import com.example.myapplication.ui.activities.QuizActivity;
 import com.example.myapplication.viewmodel.InterviewViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -30,6 +32,7 @@ public class AIInterviewFragment extends Fragment {
     private TextView tvTotalAttempts;
     private TextView tvAverageScore;
     private ChipGroup domainChipGroup;
+    private MaterialButton btnTakeSkillQuiz;
     private MaterialButton btnStartInterview;
     private RecyclerView recyclerQuestions;
     private InterviewViewModel viewModel;
@@ -50,6 +53,7 @@ public class AIInterviewFragment extends Fragment {
         setupRecyclerView();
         setupViewModel();
         setupDomainSelection();
+        setupQuizButton();
         setupStartButton();
         
         loadInitialData();
@@ -60,6 +64,7 @@ public class AIInterviewFragment extends Fragment {
         tvTotalAttempts = view.findViewById(R.id.tv_total_attempts);
         tvAverageScore = view.findViewById(R.id.tv_average_score);
         domainChipGroup = view.findViewById(R.id.domain_chip_group);
+        btnTakeSkillQuiz = view.findViewById(R.id.btn_take_skill_quiz);
         btnStartInterview = view.findViewById(R.id.btn_start_interview);
         recyclerQuestions = view.findViewById(R.id.recycler_questions);
     }
@@ -133,6 +138,27 @@ public class AIInterviewFragment extends Fragment {
             Intent intent = new Intent(requireContext(), InterviewActivity.class);
             intent.putExtra("DOMAIN", selectedDomain);
             startActivity(intent);
+        });
+    }
+
+    private void setupQuizButton() {
+        btnTakeSkillQuiz.setOnClickListener(v -> {
+            new Thread(() -> {
+                UserProfileRepository repository = new UserProfileRepository(requireContext());
+                UserProfile profile = repository.getProfileSync();
+                String skillsCsv = profile != null ? profile.getSkills() : "";
+
+                requireActivity().runOnUiThread(() -> {
+                    if (skillsCsv == null || skillsCsv.trim().isEmpty()) {
+                        Toast.makeText(requireContext(), "Please add skills in your Profile first", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    Intent intent = new Intent(requireContext(), QuizActivity.class);
+                    intent.putExtra("USER_SKILLS", skillsCsv);
+                    startActivity(intent);
+                });
+            }).start();
         });
     }
     
