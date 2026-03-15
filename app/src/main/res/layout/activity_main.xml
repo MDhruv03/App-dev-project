@@ -39,6 +39,16 @@
                 android:textStyle="bold" />
 
             <ImageButton
+                android:id="@+id/btnToggleDarkMode"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Toggle dark mode"
+                android:src="@android:drawable/ic_menu_preferences"
+                app:tint="@color/primary" />
+
+            <ImageButton
                 android:id="@+id/btn_profile"
                 android:layout_width="40dp"
                 android:layout_height="40dp"

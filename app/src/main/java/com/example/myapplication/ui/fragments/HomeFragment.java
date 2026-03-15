@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -24,8 +25,10 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class HomeFragment extends Fragment {
     
@@ -34,6 +37,7 @@ public class HomeFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerViewRecommended;
     private RecyclerView recyclerViewAll;
+    private View layoutEmptyState;
     
     private OpportunityHorizontalAdapter recommendedAdapter;
     private OpportunityAdapter allOpportunitiesAdapter;
@@ -50,8 +54,8 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         
         initializeViews(view);
-        setupViewModel();
         setupRecyclerViews();
+        setupViewModel();
         setupSwipeRefresh();
         setupFilters();
         setupSearch();
@@ -61,23 +65,36 @@ public class HomeFragment extends Fragment {
     }
     
     private void initializeViews(View view) {
-        searchInput = view.findViewById(R.id.search_input);
+        searchInput = view.findViewById(R.id.searchView);
         filterChipGroup = view.findViewById(R.id.filter_chip_group);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
-        recyclerViewRecommended = view.findViewById(R.id.recycler_recommended);
-        recyclerViewAll = view.findViewById(R.id.recycler_all);
+        recyclerViewRecommended = view.findViewById(R.id.rvRecommended);
+        recyclerViewAll = view.findViewById(R.id.rvOpportunities);
+        layoutEmptyState = view.findViewById(R.id.layoutEmptyState);
     }
     
     private void setupViewModel() {
         viewModel = new ViewModelProvider(this).get(OpportunityViewModel.class);
-        
-        viewModel.getRecommendedOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
-            if (opportunities != null && !opportunities.isEmpty()) {
-                recommendedAdapter.setOpportunities(opportunities);
+
+        viewModel.getAllOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
+            if (opportunities == null) {
+                recommendedAdapter.setOpportunities(new ArrayList<>());
+                return;
             }
+
+            List<Opportunity> recommended = opportunities.stream()
+                    .filter(opportunity -> !opportunity.isSaved())
+                    .sorted(Comparator.comparingDouble(Opportunity::getRecommendationScore).reversed())
+                    .limit(5)
+                    .collect(Collectors.toList());
+            recommendedAdapter.setOpportunities(recommended);
         });
         
         viewModel.getFilteredOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
+            boolean isEmpty = opportunities == null || opportunities.isEmpty();
+            layoutEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            recyclerViewAll.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+
             if (opportunities != null) {
                 allOpportunitiesAdapter.setOpportunities(opportunities);
             }
@@ -86,6 +103,12 @@ public class HomeFragment extends Fragment {
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading != null) {
                 swipeRefreshLayout.setRefreshing(isLoading);
+            }
+        });
+
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.trim().isEmpty()) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -123,14 +146,18 @@ public class HomeFragment extends Fragment {
             public void onSaveClick(Opportunity opportunity) {
                 saveOpportunity(opportunity);
             }
+
+            @Override
+            public void onShareClick(Opportunity opportunity) {
+                shareOpportunity(opportunity);
+            }
         });
         recyclerViewAll.setAdapter(allOpportunitiesAdapter);
     }
     
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            viewModel.loadAllOpportunities();
-            viewModel.loadRecommendedOpportunities();
+            viewModel.refresh();
         });
     }
     
@@ -140,7 +167,25 @@ public class HomeFragment extends Fragment {
             for (Integer checkedId : checkedIds) {
                 Chip chip = group.findViewById(checkedId);
                 if (chip != null) {
-                    activeFilters.add(chip.getText().toString().toLowerCase(Locale.ROOT));
+                    String token;
+                    if (checkedId == R.id.chip_internship) {
+                        token = "internship";
+                    } else if (checkedId == R.id.chip_job) {
+                        token = "job";
+                    } else if (checkedId == R.id.chip_hackathon) {
+                        token = "hackathon";
+                    } else if (checkedId == R.id.chip_remote_yes) {
+                        token = "remote_yes";
+                    } else if (checkedId == R.id.chip_remote_no) {
+                        token = "remote_no";
+                    } else if (checkedId == R.id.chip_paid_yes) {
+                        token = "paid_yes";
+                    } else if (checkedId == R.id.chip_paid_no) {
+                        token = "paid_no";
+                    } else {
+                        token = chip.getText().toString().toLowerCase(Locale.ROOT);
+                    }
+                    activeFilters.add(token);
                 }
             }
             viewModel.updateFilters(activeFilters);
@@ -174,5 +219,15 @@ public class HomeFragment extends Fragment {
     private void saveOpportunity(Opportunity opportunity) {
         viewModel.toggleSaveStatus(opportunity);
         Toast.makeText(requireContext(), opportunity.isSaved() ? "Saved!" : "Unsaved", Toast.LENGTH_SHORT).show();
+    }
+
+    private void shareOpportunity(Opportunity opportunity) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        String shareText = opportunity.getTitle() + " at " + opportunity.getCompany()
+                + "\n\nApply here: " + opportunity.getApplyLink()
+                + "\n\nShared via OpportunityHub";
+        intent.putExtra(Intent.EXTRA_TEXT, shareText);
+        startActivity(Intent.createChooser(intent, "Share via"));
     }
 }

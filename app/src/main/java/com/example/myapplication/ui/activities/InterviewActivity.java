@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -14,6 +15,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.model.InterviewProgress;
 import com.example.myapplication.model.InterviewQuestion;
 import com.example.myapplication.viewmodel.InterviewViewModel;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
@@ -32,6 +34,9 @@ public class InterviewActivity extends AppCompatActivity {
     private MaterialButton btnNext;
     private MaterialButton btnFinish;
     private LinearProgressIndicator progressIndicator;
+
+    private double sessionTotalScore = 0.0;
+    private int sessionAnsweredCount = 0;
     
     private String selectedDomain;
     
@@ -122,6 +127,8 @@ public class InterviewActivity extends AppCompatActivity {
         
         viewModel.submitAnswer(answer, progress -> {
             runOnUiThread(() -> {
+                sessionTotalScore += progress.getScore();
+                sessionAnsweredCount++;
                 showFeedback(progress);
                 btnSubmit.setEnabled(true);
             });
@@ -154,12 +161,49 @@ public class InterviewActivity extends AppCompatActivity {
     }
     
     private void finishInterview() {
-        new AlertDialog.Builder(this)
-            .setTitle("Interview Complete!")
-            .setMessage("Great job! Your answers have been recorded. Check the Analytics tab to see your progress.")
-            .setPositiveButton("Finish", (dialog, which) -> finish())
+        int totalQuestions = viewModel.getTotalQuestions();
+        int totalPossiblePoints = totalQuestions * 100;
+        int earnedPoints = (int) Math.round(sessionTotalScore);
+        double percentage = totalPossiblePoints > 0 ? (sessionTotalScore / totalPossiblePoints) * 100.0 : 0.0;
+
+        String performanceLabel;
+        if (percentage >= 80.0) {
+            performanceLabel = "Excellent! 🔥";
+        } else if (percentage >= 50.0) {
+            performanceLabel = "Good Job! 👍";
+        } else {
+            performanceLabel = "Keep Practicing! 💪";
+        }
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_interview_result, null);
+        TextView tvFinalScore = dialogView.findViewById(R.id.tvFinalScore);
+        TextView tvPerformanceLabel = dialogView.findViewById(R.id.tvPerformanceLabel);
+        TextView tvScoreBreakdown = dialogView.findViewById(R.id.tvScoreBreakdown);
+        MaterialButton btnPracticeAgain = dialogView.findViewById(R.id.btnPracticeAgain);
+        MaterialButton btnGoHome = dialogView.findViewById(R.id.btnGoHome);
+
+        tvFinalScore.setText(earnedPoints + " / " + totalPossiblePoints + " pts");
+        tvPerformanceLabel.setText(performanceLabel);
+        tvScoreBreakdown.setText(sessionAnsweredCount + " out of " + totalQuestions + " questions answered");
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
             .setCancelable(false)
-            .show();
+            .create();
+
+        btnPracticeAgain.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent restartIntent = getIntent();
+            finish();
+            startActivity(restartIntent);
+        });
+
+        btnGoHome.setOnClickListener(v -> {
+            dialog.dismiss();
+            finish();
+        });
+
+        dialog.show();
     }
     
     private void setupBackPress() {

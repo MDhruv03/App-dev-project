@@ -13,7 +13,9 @@ import com.example.myapplication.model.InterviewProgress;
 import com.example.myapplication.model.InterviewQuestion;
 import com.example.myapplication.model.Notification;
 import com.example.myapplication.model.Opportunity;
+import com.example.myapplication.model.PendingSyncOperation;
 import com.example.myapplication.model.User;
+import com.example.myapplication.model.UserProfile;
 import com.example.myapplication.model.UserPreferences;
 
 @Database(entities = {
@@ -24,8 +26,10 @@ import com.example.myapplication.model.UserPreferences;
     InterviewQuestion.class,
     InterviewProgress.class,
     Notification.class,
-    ActivityLog.class
-}, version = 2, exportSchema = false)
+    ActivityLog.class,
+    PendingSyncOperation.class,
+    UserProfile.class
+}, version = 4, exportSchema = false)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
     
@@ -34,9 +38,11 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract OpportunityDao opportunityDao();
     public abstract ApplicationDao applicationDao();
     public abstract UserDao userDao();
+    public abstract UserProfileDao getUserProfileDao();
     public abstract InterviewQuestionDao interviewQuestionDao();
     public abstract NotificationDao notificationDao();
     public abstract ActivityLogDao activityLogDao();
+    public abstract PendingSyncOperationDao pendingSyncOperationDao();
     
     public static synchronized AppDatabase getInstance(Context context) {
         if (instance == null) {

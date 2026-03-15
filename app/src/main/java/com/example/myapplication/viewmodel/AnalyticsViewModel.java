@@ -10,6 +10,8 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.myapplication.repository.ApplicationRepository;
 import com.example.myapplication.repository.InterviewRepository;
 
+import java.util.List;
+
 public class AnalyticsViewModel extends AndroidViewModel {
     
     private final ApplicationRepository applicationRepository;
@@ -19,6 +21,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> interviewsScheduled = new MutableLiveData<>();
     private final MutableLiveData<Integer> offersReceived = new MutableLiveData<>();
     private final MutableLiveData<Double> successRate = new MutableLiveData<>();
+    private final MutableLiveData<List<com.example.myapplication.model.Application>> applicationList = new MutableLiveData<>();
     private final MutableLiveData<Double> interviewReadiness = new MutableLiveData<>();
     private final MutableLiveData<Integer> practiceAttempts = new MutableLiveData<>();
     private final MutableLiveData<Double> averageInterviewScore = new MutableLiveData<>();
@@ -39,6 +42,35 @@ public class AnalyticsViewModel extends AndroidViewModel {
     
     // Load application statistics
     private void loadApplicationStats() {
+        applicationRepository.getAllApplications(DEFAULT_USER_ID, applications -> {
+            applicationList.postValue(applications);
+
+            int total = applications != null ? applications.size() : 0;
+            int interviewCount = 0;
+            int offersCount = 0;
+
+            if (applications != null) {
+                for (com.example.myapplication.model.Application app : applications) {
+                    if (app == null || app.getStatus() == null) {
+                        continue;
+                    }
+                    String status = app.getStatus().toLowerCase();
+                    if ("interview".equals(status)) {
+                        interviewCount++;
+                    } else if ("accepted".equals(status)) {
+                        offersCount++;
+                    }
+                }
+            }
+
+            totalApplications.postValue(total);
+            interviewsScheduled.postValue(interviewCount);
+            offersReceived.postValue(offersCount);
+
+            double rate = total > 0 ? (offersCount * 100.0) / total : 0.0;
+            successRate.postValue(rate);
+        });
+
         applicationRepository.getTotalApplications(DEFAULT_USER_ID, count -> {
             totalApplications.postValue(count);
         });
@@ -95,6 +127,10 @@ public class AnalyticsViewModel extends AndroidViewModel {
     
     public LiveData<Double> getSuccessRate() {
         return successRate;
+    }
+
+    public LiveData<List<com.example.myapplication.model.Application>> getApplicationList() {
+        return applicationList;
     }
     
     public LiveData<Double> getInterviewReadiness() {

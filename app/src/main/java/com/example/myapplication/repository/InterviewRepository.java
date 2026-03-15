@@ -7,6 +7,8 @@ import com.example.myapplication.database.InterviewQuestionDao;
 import com.example.myapplication.model.InterviewProgress;
 import com.example.myapplication.model.InterviewQuestion;
 import com.example.myapplication.network.MockApiService;
+import com.example.myapplication.network.NetworkUtils;
+import com.example.myapplication.util.InterviewDataGenerator;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -14,11 +16,13 @@ import java.util.concurrent.Executors;
 
 public class InterviewRepository {
     
+    private final Context appContext;
     private final InterviewQuestionDao interviewDao;
     private final MockApiService apiService;
     private final ExecutorService executorService;
     
     public InterviewRepository(Context context) {
+        appContext = context.getApplicationContext();
         AppDatabase database = AppDatabase.getInstance(context);
         interviewDao = database.interviewQuestionDao();
         apiService = MockApiService.getInstance();
@@ -35,12 +39,36 @@ public class InterviewRepository {
         });
     }
     
-    // Get questions by domain (fetch from local DB)
+    // Network-first with local fallback
     public void getQuestionsByDomain(String domain, OnQuestionsLoadedListener listener) {
-        executorService.execute(() -> {
-            List<InterviewQuestion> questions = interviewDao.getQuestionsByDomain(domain);
-            if (listener != null) {
-                listener.onLoaded(questions);
+        if (!NetworkUtils.isNetworkAvailable(appContext)) {
+            loadQuestionsFromLocal(domain, listener, "No internet connection. Showing cached interview questions.");
+            return;
+        }
+
+        apiService.fetchQuestionsByDomain(domain, new com.example.myapplication.network.ApiCallback<List<InterviewQuestion>>() {
+            @Override
+            public void onSuccess(List<InterviewQuestion> remoteQuestions) {
+                executorService.execute(() -> {
+                    if (remoteQuestions == null || remoteQuestions.isEmpty()) {
+                        loadQuestionsFromLocal(domain, listener, null);
+                        return;
+                    }
+
+                    List<InterviewQuestion> localQuestions = interviewDao.getQuestionsByDomain(domain);
+                    InterviewSyncHelper.mergeLocalQuestionStateIntoRemote(remoteQuestions, localQuestions);
+                    interviewDao.deleteQuestionsByDomain(domain);
+                    interviewDao.insertAll(remoteQuestions);
+                    List<InterviewQuestion> questions = interviewDao.getQuestionsByDomain(domain);
+                    if (listener != null) {
+                        listener.onLoaded(questions);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                loadQuestionsFromLocal(domain, listener, "Failed to sync interview questions. Showing cached data.");
             }
         });
     }
@@ -98,6 +126,9 @@ public class InterviewRepository {
     // Interfaces for callbacks
     public interface OnQuestionsLoadedListener {
         void onLoaded(List<InterviewQuestion> questions);
+
+        default void onError(String message) {
+        }
     }
     
     public interface OnProgressLoadedListener {
@@ -114,5 +145,25 @@ public class InterviewRepository {
     
     public interface OnCountLoadedListener {
         void onLoaded(int count);
+    }
+
+    private void loadQuestionsFromLocal(String domain, OnQuestionsLoadedListener listener, String fallbackMessage) {
+        executorService.execute(() -> {
+            List<InterviewQuestion> questions = interviewDao.getQuestionsByDomain(domain);
+            if (questions == null || questions.isEmpty()) {
+                List<InterviewQuestion> seeded = InterviewDataGenerator.generateQuestionsForDomain(domain);
+                if (seeded != null && !seeded.isEmpty()) {
+                    interviewDao.insertAll(seeded);
+                    questions = interviewDao.getQuestionsByDomain(domain);
+                }
+            }
+
+            if (listener != null) {
+                if (fallbackMessage != null && !fallbackMessage.trim().isEmpty()) {
+                    listener.onError(fallbackMessage);
+                }
+                listener.onLoaded(questions);
+            }
+        });
     }
 }

@@ -2,6 +2,7 @@ package com.example.myapplication.database;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import com.example.myapplication.model.InterviewProgress;
@@ -14,9 +15,15 @@ public interface InterviewQuestionDao {
     
     @Insert
     long insert(InterviewQuestion question);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<InterviewQuestion> questions);
     
     @Query("SELECT * FROM interview_questions WHERE domain = :domain")
     List<InterviewQuestion> getQuestionsByDomain(String domain);
+
+    @Query("DELETE FROM interview_questions WHERE domain = :domain")
+    void deleteQuestionsByDomain(String domain);
     
     @Query("SELECT * FROM interview_questions WHERE domain = :domain AND topic = :topic")
     List<InterviewQuestion> getQuestionsByTopic(String domain, String topic);

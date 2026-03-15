@@ -3,6 +3,7 @@ package com.example.myapplication.database;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
@@ -15,6 +16,9 @@ public interface OpportunityDao {
     
     @Insert
     long insert(Opportunity opportunity);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(java.util.List<Opportunity> opportunities);
     
     @Update
     void update(Opportunity opportunity);

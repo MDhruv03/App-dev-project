@@ -50,7 +50,7 @@
             android:textColor="@color/on_background"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/btn_save"
+            app:layout_constraintEnd_toStartOf="@id/btnShare"
             app:layout_constraintStart_toEndOf="@id/company_logo_container"
             app:layout_constraintTop_toTopOf="@id/company_logo_container" />
 
@@ -64,9 +64,20 @@
             android:text="Google"
             android:textColor="@color/on_surface_variant"
             android:textSize="14sp"
-            app:layout_constraintEnd_toStartOf="@id/btn_save"
+            app:layout_constraintEnd_toStartOf="@id/btnShare"
             app:layout_constraintStart_toEndOf="@id/company_logo_container"
             app:layout_constraintTop_toBottomOf="@id/tv_title" />
+
+        <ImageButton
+            android:id="@+id/btnShare"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Share"
+            android:src="@android:drawable/ic_menu_share"
+            app:layout_constraintEnd_toStartOf="@id/btn_save"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/on_surface_variant" />
 
         <!-- Save Button -->
         <ImageButton
@@ -174,6 +185,17 @@
             app:layout_constraintStart_toEndOf="@id/match_container"
             app:layout_constraintTop_toTopOf="@id/match_container" />
 
+        <TextView
+            android:id="@+id/tvMatchScore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Match: 0 pts"
+            android:textColor="@color/on_surface_variant"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/match_container" />
+
         <!-- Apply Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_apply"
@@ -185,7 +207,7 @@
             android:text="@string/apply"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/match_container" />
+            app:layout_constraintTop_toBottomOf="@id/tvMatchScore" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +28,7 @@ public class SavedFragment extends Fragment {
     
     private ChipGroup filterChipGroup;
     private RecyclerView recyclerViewSaved;
+    private View layoutEmptyState;
     private OpportunityViewModel viewModel;
     private OpportunityAdapter adapter;
     private List<Opportunity> savedSource = new ArrayList<>();
@@ -42,8 +44,8 @@ public class SavedFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         
         initializeViews(view);
-        setupViewModel();
         setupRecyclerView();
+        setupViewModel();
         setupFilters();
         
         viewModel.loadSavedOpportunities();
@@ -52,12 +54,17 @@ public class SavedFragment extends Fragment {
     private void initializeViews(View view) {
         filterChipGroup = view.findViewById(R.id.filter_chip_group);
         recyclerViewSaved = view.findViewById(R.id.recycler_saved);
+        layoutEmptyState = view.findViewById(R.id.layoutEmptyState);
     }
     
     private void setupViewModel() {
         viewModel = new ViewModelProvider(this).get(OpportunityViewModel.class);
         
         viewModel.getSavedOpportunities().observe(getViewLifecycleOwner(), opportunities -> {
+            boolean isEmpty = opportunities == null || opportunities.isEmpty();
+            layoutEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            recyclerViewSaved.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+
             if (opportunities != null) {
                 savedSource = opportunities;
                 applySavedFilters();
@@ -84,6 +91,11 @@ public class SavedFragment extends Fragment {
             public void onSaveClick(Opportunity opportunity) {
                 viewModel.toggleSaveStatus(opportunity);
                 Toast.makeText(requireContext(), "Removed from saved", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onShareClick(Opportunity opportunity) {
+                shareOpportunity(opportunity);
             }
         });
         recyclerViewSaved.setAdapter(adapter);
@@ -119,8 +131,18 @@ public class SavedFragment extends Fragment {
         }
 
         List<Opportunity> filtered = savedSource.stream()
-                .filter(opp -> typeFilters.contains(opp.getType().toLowerCase(Locale.ROOT)))
+            .filter(opp -> opp.getType() != null && typeFilters.contains(opp.getType().toLowerCase(Locale.ROOT)))
                 .collect(Collectors.toList());
         adapter.setOpportunities(filtered);
+    }
+
+    private void shareOpportunity(Opportunity opportunity) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        String shareText = opportunity.getTitle() + " at " + opportunity.getCompany()
+                + "\n\nApply here: " + opportunity.getApplyLink()
+                + "\n\nShared via OpportunityHub";
+        intent.putExtra(Intent.EXTRA_TEXT, shareText);
+        startActivity(Intent.createChooser(intent, "Share via"));
     }
 }

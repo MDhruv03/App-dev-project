@@ -24,4 +24,9 @@
         android:id="@+id/navigation_analytics"
         android:icon="@android:drawable/ic_menu_info_details"
         android:title="@string/analytics" />
+
+    <item
+        android:id="@+id/navigation_profile"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:title="Profile" />
 </menu>

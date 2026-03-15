@@ -1,5 +1,6 @@
 package com.example.myapplication.ai;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -51,6 +52,11 @@ public class ResumeParser {
         "Leadership", "Communication", "Problem Solving", "Team Work", "Critical Thinking",
         "Time Management", "Adaptability", "Creativity", "Collaboration", "Analytical"
     ));
+
+    private static final List<String> RESUME_PARSE_SKILLS = Arrays.asList(
+        "Java", "Python", "Android", "Kotlin", "SQL", "React", "Node", "ML", "AI", "C++",
+        "Firebase", "REST", "Git", "Linux", "DSA", "OOPS", "DBMS", "System Design"
+    );
     
     /**
      * Extract skills from resume text
@@ -233,6 +239,7 @@ public class ResumeParser {
     public static ResumeSummary parseResume(String resumeText) {
         ResumeSummary summary = new ResumeSummary();
         summary.setSkills(extractSkills(resumeText));
+        summary.setExtractedSkills(summary.getSkills());
         summary.setEmail(extractEmail(resumeText));
         summary.setPhone(extractPhone(resumeText));
         summary.setExperienceYears(extractExperienceYears(resumeText));
@@ -242,12 +249,43 @@ public class ResumeParser {
         
         return summary;
     }
+
+    public static ResumeSummary parseResumeFromBytes(byte[] pdfBytes) {
+        ResumeSummary summary = new ResumeSummary();
+
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            summary.setExtractedSkills(new ArrayList<>());
+            summary.setSkills(new ArrayList<>());
+            return summary;
+        }
+
+        String rawText = new String(pdfBytes, StandardCharsets.UTF_8);
+        String lowered = rawText.toLowerCase();
+        List<String> foundSkills = new ArrayList<>();
+
+        for (String skill : RESUME_PARSE_SKILLS) {
+            if (lowered.contains(skill.toLowerCase())) {
+                foundSkills.add(skill);
+            }
+        }
+
+        summary.setExtractedSkills(foundSkills);
+        summary.setSkills(foundSkills);
+        summary.setEmail(extractEmail(rawText));
+        summary.setPhone(extractPhone(rawText));
+        summary.setExperienceYears(extractExperienceYears(rawText));
+        summary.setEducation(extractEducation(rawText));
+        summary.setGitHub(extractGitHub(rawText));
+        summary.setLinkedIn(extractLinkedIn(rawText));
+        return summary;
+    }
     
     /**
      * Resume summary data class
      */
     public static class ResumeSummary {
         private List<String> skills;
+        private List<String> extractedSkills;
         private String email;
         private String phone;
         private int experienceYears;
@@ -258,6 +296,9 @@ public class ResumeParser {
         // Getters and setters
         public List<String> getSkills() { return skills; }
         public void setSkills(List<String> skills) { this.skills = skills; }
+
+        public List<String> getExtractedSkills() { return extractedSkills; }
+        public void setExtractedSkills(List<String> extractedSkills) { this.extractedSkills = extractedSkills; }
         
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }

@@ -21,10 +21,14 @@ public class NotificationHelper {
     private static final String CHANNEL_ID_DEADLINES = "deadlines_channel";
     private static final String CHANNEL_ID_INTERVIEWS = "interviews_channel";
     private static final String CHANNEL_ID_GENERAL = "general_channel";
+    private static final String CHANNEL_ID_OPPORTUNITIES = "opportunities";
+    private static final String CHANNEL_ID_REMINDERS = "reminders";
     
     private static final String CHANNEL_NAME_DEADLINES = "Application Deadlines";
     private static final String CHANNEL_NAME_INTERVIEWS = "Interview Reminders";
     private static final String CHANNEL_NAME_GENERAL = "General Notifications";
+    private static final String CHANNEL_NAME_OPPORTUNITIES = "Daily Opportunities";
+    private static final String CHANNEL_NAME_REMINDERS = "Deadline Reminders";
     
     /**
      * Create notification channels
@@ -62,7 +66,48 @@ public class NotificationHelper {
             );
             generalChannel.setDescription("General app notifications");
             manager.createNotificationChannel(generalChannel);
+
+            // Daily opportunities channel
+            NotificationChannel opportunitiesChannel = new NotificationChannel(
+                CHANNEL_ID_OPPORTUNITIES,
+                CHANNEL_NAME_OPPORTUNITIES,
+                NotificationManager.IMPORTANCE_DEFAULT
+            );
+            opportunitiesChannel.setDescription("Top recommended opportunities each day");
+            manager.createNotificationChannel(opportunitiesChannel);
+
+            // Deadline reminders channel
+            NotificationChannel remindersChannel = new NotificationChannel(
+                CHANNEL_ID_REMINDERS,
+                CHANNEL_NAME_REMINDERS,
+                NotificationManager.IMPORTANCE_DEFAULT
+            );
+            remindersChannel.setDescription("Reminders for saved opportunity deadlines");
+            manager.createNotificationChannel(remindersChannel);
         }
+    }
+
+    public static void showChannelNotification(Context context, String channelId, String title, String message) {
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setStyle(new NotificationCompat.BigTextStyle().bigText(message));
+
+        NotificationManagerCompat.from(context).notify(generateNotificationId(), builder.build());
     }
     
     /**

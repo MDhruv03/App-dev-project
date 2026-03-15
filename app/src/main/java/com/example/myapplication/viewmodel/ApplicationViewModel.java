@@ -10,8 +10,6 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.myapplication.repository.ApplicationRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 public class ApplicationViewModel extends AndroidViewModel {
     
     private final ApplicationRepository repository;
@@ -21,7 +19,11 @@ public class ApplicationViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> appliedCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> interviewCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> acceptedCount = new MutableLiveData<>();
+    private final MutableLiveData<Integer> pendingSyncCount = new MutableLiveData<>();
+    private final MutableLiveData<String> pendingSyncBreakdown = new MutableLiveData<>();
+    private final MutableLiveData<Long> lastSyncedAt = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     
     private static final int DEFAULT_USER_ID = 1; // Mock user ID
     
@@ -33,11 +35,23 @@ public class ApplicationViewModel extends AndroidViewModel {
     // Load all applications for current user
     public void loadAllApplications() {
         isLoading.setValue(true);
-        repository.getAllApplications(DEFAULT_USER_ID, applications -> {
-            isLoading.postValue(false);
-            allApplications.postValue(applications);
-            filteredApplications.postValue(applications);
-            updateCounts(applications);
+        repository.getAllApplications(DEFAULT_USER_ID, new ApplicationRepository.OnApplicationsLoadedListener() {
+            @Override
+            public void onLoaded(List<com.example.myapplication.model.Application> applications) {
+                isLoading.postValue(false);
+                allApplications.postValue(applications);
+                filteredApplications.postValue(applications);
+                updateCounts(applications);
+                lastSyncedAt.postValue(System.currentTimeMillis());
+                refreshPendingSyncCount();
+            }
+
+            @Override
+            public void onError(String message) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
+                refreshPendingSyncCount();
+            }
         });
     }
     
@@ -58,6 +72,8 @@ public class ApplicationViewModel extends AndroidViewModel {
         repository.insert(application, success -> {
             if (success) {
                 loadAllApplications();
+            } else {
+                refreshPendingSyncCount();
             }
         });
     }
@@ -67,6 +83,8 @@ public class ApplicationViewModel extends AndroidViewModel {
         repository.update(application, success -> {
             if (success) {
                 loadAllApplications();
+            } else {
+                refreshPendingSyncCount();
             }
         });
     }
@@ -76,7 +94,23 @@ public class ApplicationViewModel extends AndroidViewModel {
         repository.delete(application, success -> {
             if (success) {
                 loadAllApplications();
+            } else {
+                refreshPendingSyncCount();
             }
+        });
+    }
+
+    public void syncNow() {
+        isLoading.setValue(true);
+        repository.syncPendingOperations();
+        loadAllApplications();
+    }
+
+    private void refreshPendingSyncCount() {
+        repository.getPendingSyncCount(count -> pendingSyncCount.postValue(count));
+        repository.getPendingSyncBreakdown((insertCount, updateCount, deleteCount) -> {
+            String breakdown = "add: " + insertCount + "  update: " + updateCount + "  delete: " + deleteCount;
+            pendingSyncBreakdown.postValue(breakdown);
         });
     }
     
@@ -117,8 +151,24 @@ public class ApplicationViewModel extends AndroidViewModel {
     public LiveData<Integer> getAcceptedCount() {
         return acceptedCount;
     }
+
+    public LiveData<Integer> getPendingSyncCount() {
+        return pendingSyncCount;
+    }
+
+    public LiveData<String> getPendingSyncBreakdown() {
+        return pendingSyncBreakdown;
+    }
+
+    public LiveData<Long> getLastSyncedAt() {
+        return lastSyncedAt;
+    }
     
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
+    }
+
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
     }
 }

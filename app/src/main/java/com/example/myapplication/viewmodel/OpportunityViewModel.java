@@ -7,8 +7,11 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.myapplication.ai.RecommendationEngine;
 import com.example.myapplication.model.Opportunity;
+import com.example.myapplication.model.UserProfile;
 import com.example.myapplication.repository.OpportunityRepository;
+import com.example.myapplication.repository.UserProfileRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 public class OpportunityViewModel extends AndroidViewModel {
     
     private final OpportunityRepository repository;
+    private final UserProfileRepository userProfileRepository;
     private final MutableLiveData<List<Opportunity>> allOpportunities = new MutableLiveData<>();
     private final MutableLiveData<List<Opportunity>> recommendedOpportunities = new MutableLiveData<>();
     private final MutableLiveData<List<Opportunity>> savedOpportunities = new MutableLiveData<>();
@@ -30,22 +34,42 @@ public class OpportunityViewModel extends AndroidViewModel {
     public OpportunityViewModel(@NonNull Application application) {
         super(application);
         repository = new OpportunityRepository(application.getApplicationContext());
+        userProfileRepository = new UserProfileRepository(application.getApplicationContext());
     }
     
     // Load all opportunities
     public void loadAllOpportunities() {
         isLoading.postValue(true);
-        repository.getAllOpportunities(opportunities -> {
-            isLoading.postValue(false);
-            allOpportunities.postValue(opportunities);
-            applyFilters();
+        repository.getAllOpportunities(new OpportunityRepository.OnOpportunitiesLoadedListener() {
+            @Override
+            public void onLoaded(List<Opportunity> opportunities) {
+                isLoading.postValue(false);
+                allOpportunities.postValue(opportunities);
+                applyFilters();
+            }
+
+            @Override
+            public void onError(String message) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
+            }
         });
     }
     
     // Load recommended opportunities
     public void loadRecommendedOpportunities() {
-        repository.getRecommendedOpportunities(opportunities -> {
-            recommendedOpportunities.postValue(opportunities);
+        repository.getAllOpportunities(new OpportunityRepository.OnOpportunitiesLoadedListener() {
+            @Override
+            public void onLoaded(List<Opportunity> opportunities) {
+                UserProfile profile = userProfileRepository.getProfileSync();
+                List<Opportunity> recommended = RecommendationEngine.getRecommended(opportunities, profile);
+                recommendedOpportunities.postValue(recommended);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.postValue(message);
+            }
         });
     }
     
@@ -93,6 +117,11 @@ public class OpportunityViewModel extends AndroidViewModel {
         applyFilters();
     }
 
+    public void refresh() {
+        loadAllOpportunities();
+        loadRecommendedOpportunities();
+    }
+
     public void updateFilters(List<String> filters) {
         activeFilters.clear();
         if (filters != null) {
@@ -115,15 +144,26 @@ public class OpportunityViewModel extends AndroidViewModel {
         String query = activeSearchQuery.toLowerCase(Locale.ROOT);
         boolean requireRemote = activeFilters.contains("remote");
         boolean requirePaid = activeFilters.contains("paid");
+        boolean requireRemoteYes = activeFilters.contains("remote_yes");
+        boolean requireRemoteNo = activeFilters.contains("remote_no");
+        boolean requirePaidYes = activeFilters.contains("paid_yes");
+        boolean requirePaidNo = activeFilters.contains("paid_no");
+
+        boolean remotePositive = requireRemote || requireRemoteYes;
+        boolean remoteNegative = requireRemoteNo;
+        boolean paidPositive = requirePaid || requirePaidYes;
+        boolean paidNegative = requirePaidNo;
 
         List<String> typeFilters = activeFilters.stream()
                 .filter(filter -> filter.equals("internship") || filter.equals("job") || filter.equals("hackathon"))
                 .collect(Collectors.toList());
 
         List<Opportunity> filtered = all.stream()
-                .filter(o -> typeFilters.isEmpty() || typeFilters.contains(o.getType().toLowerCase(Locale.ROOT)))
-                .filter(o -> !requireRemote || o.isRemote())
-                .filter(o -> !requirePaid || o.isPaid())
+                .filter(o -> typeFilters.isEmpty() || (o.getType() != null && typeFilters.contains(o.getType().toLowerCase(Locale.ROOT))))
+            .filter(o -> !remotePositive || o.isRemote())
+            .filter(o -> !remoteNegative || !o.isRemote())
+            .filter(o -> !paidPositive || o.isPaid())
+            .filter(o -> !paidNegative || !o.isPaid())
                 .filter(o -> query.isEmpty() ||
                         safe(o.getTitle()).contains(query) ||
                         safe(o.getCompany()).contains(query) ||

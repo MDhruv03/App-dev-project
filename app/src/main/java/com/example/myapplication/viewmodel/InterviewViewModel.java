@@ -23,6 +23,7 @@ public class InterviewViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> totalAttempts = new MutableLiveData<>();
     private final MutableLiveData<Double> readinessScore = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     
     private static final int DEFAULT_USER_ID = 1; // Mock user ID
     private int currentQuestionIndex = 0;
@@ -35,12 +36,21 @@ public class InterviewViewModel extends AndroidViewModel {
     // Load questions by domain
     public void loadQuestionsByDomain(String domain) {
         isLoading.setValue(true);
-        repository.getQuestionsByDomain(domain, questionList -> {
-            isLoading.postValue(false);
-            questions.postValue(questionList);
-            if (questionList != null && !questionList.isEmpty()) {
-                currentQuestionIndex = 0;
-                currentQuestion.postValue(questionList.get(0));
+        repository.getQuestionsByDomain(domain, new InterviewRepository.OnQuestionsLoadedListener() {
+            @Override
+            public void onLoaded(List<InterviewQuestion> questionList) {
+                isLoading.postValue(false);
+                questions.postValue(questionList);
+                if (questionList != null && !questionList.isEmpty()) {
+                    currentQuestionIndex = 0;
+                    currentQuestion.postValue(questionList.get(0));
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
             }
         });
     }
@@ -195,6 +205,10 @@ public class InterviewViewModel extends AndroidViewModel {
     
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
+    }
+
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
     }
     
     public int getCurrentQuestionNumber() {

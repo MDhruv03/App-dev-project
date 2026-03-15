@@ -47,8 +47,8 @@ public class AIInterviewFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         
         initializeViews(view);
-        setupViewModel();
         setupRecyclerView();
+        setupViewModel();
         setupDomainSelection();
         setupStartButton();
         
@@ -88,6 +88,12 @@ public class AIInterviewFragment extends Fragment {
         viewModel.getQuestions().observe(getViewLifecycleOwner(), questions -> {
             if (questions != null) {
                 adapter.setQuestions(questions);
+            }
+        });
+
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.trim().isEmpty()) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }

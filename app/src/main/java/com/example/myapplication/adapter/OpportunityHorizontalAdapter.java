@@ -67,6 +67,7 @@ public class OpportunityHorizontalAdapter extends RecyclerView.Adapter<Opportuni
         Chip chipType;
         TextView tvDeadline;
         TextView tvMatchBadge;
+        TextView tvMatchScore;
         
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -78,6 +79,7 @@ public class OpportunityHorizontalAdapter extends RecyclerView.Adapter<Opportuni
             chipType = itemView.findViewById(R.id.chip_type);
             tvDeadline = itemView.findViewById(R.id.tv_deadline);
             tvMatchBadge = itemView.findViewById(R.id.tv_match_badge);
+            tvMatchScore = itemView.findViewById(R.id.tvMatchScore);
         }
         
         public void bind(Opportunity opportunity) {
@@ -99,6 +101,14 @@ public class OpportunityHorizontalAdapter extends RecyclerView.Adapter<Opportuni
             
             // Set match badge
             tvMatchBadge.setText(opportunity.getMatchPercentage() + "% Match");
+
+            int points = (int) opportunity.getRecommendationScore();
+            if (points > 0) {
+                tvMatchScore.setVisibility(View.VISIBLE);
+                tvMatchScore.setText("Match: " + points + " pts");
+            } else {
+                tvMatchScore.setVisibility(View.GONE);
+            }
             
             // Set deadline
             if (opportunity.getDeadline() != null) {

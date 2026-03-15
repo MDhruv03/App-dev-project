@@ -4,25 +4,36 @@ import android.app.Application;
 import android.app.Activity;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+
 import com.example.myapplication.database.AppDatabase;
-import com.example.myapplication.model.Opportunity;
 import com.example.myapplication.network.MockApiService;
+import com.example.myapplication.worker.DeadlineReminderWorker;
+import com.example.myapplication.worker.NotificationWorker;
+import com.example.myapplication.worker.SyncWorker;
 import com.example.myapplication.util.AnalyticsTracker;
 import com.example.myapplication.util.CacheManager;
 import com.example.myapplication.util.CrashHandler;
 import com.example.myapplication.util.DiagnosticLogger;
 import com.example.myapplication.util.Logger;
 import com.example.myapplication.util.NotificationHelper;
-import com.example.myapplication.util.SampleDataGenerator;
+import com.example.myapplication.util.PreferencesManager;
 import com.example.myapplication.util.SettingsManager;
+import com.example.myapplication.util.TaskManager;
 import com.example.myapplication.util.ThemeManager;
+import com.example.myapplication.repository.ApplicationRepository;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Executors;
 
 public class OpportunityHubApplication extends Application {
     
     private static OpportunityHubApplication instance;
+    private static final String KEY_DARK_MODE = "dark_mode";
     
     @Override
     public void onCreate() {
@@ -31,6 +42,12 @@ public class OpportunityHubApplication extends Application {
 
         DiagnosticLogger.init(this);
         DiagnosticLogger.log("application_onCreate_start");
+
+        PreferencesManager preferencesManager = new PreferencesManager(this);
+        boolean darkModeEnabled = preferencesManager.getBoolean(KEY_DARK_MODE, false);
+        AppCompatDelegate.setDefaultNightMode(
+            darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+        );
         
         // Initialize crash handler
         CrashHandler.install(this);
@@ -44,6 +61,10 @@ public class OpportunityHubApplication extends Application {
         safeInit("analytics", this::initializeAnalytics);
         safeInit("notifications", this::initializeNotifications);
         safeInit("settings", this::initializeSettings);
+        safeInit("workmanager-sync", this::schedulePeriodicSyncWork);
+        safeInit("workmanager-daily-recommendations", this::scheduleDailyRecommendationsWork);
+        safeInit("workmanager-deadline-reminders", this::scheduleDeadlineRemindersWork);
+        safeInit("sync-scheduler", this::initializeSyncScheduler);
         
         // Initialize Mock API Service
         safeInit("mock-api", MockApiService::getInstance);
@@ -156,32 +177,70 @@ public class OpportunityHubApplication extends Application {
         
         Logger.d("App", "Settings initialized");
     }
+
+    private void initializeSyncScheduler() {
+        ApplicationRepository applicationRepository = new ApplicationRepository(this);
+        TaskManager.getInstance().scheduleWithFixedDelay(
+            applicationRepository::syncPendingOperations,
+            20,
+            60,
+            TimeUnit.SECONDS
+        );
+        Logger.d("App", "Background sync scheduler initialized");
+    }
+
+        private void schedulePeriodicSyncWork() {
+        PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(
+            SyncWorker.class,
+            15,
+            TimeUnit.MINUTES
+        )
+            .addTag("background_sync")
+            .build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "background_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            syncRequest
+        );
+        Logger.d("App", "WorkManager background sync scheduled");
+        }
+
+    private void scheduleDailyRecommendationsWork() {
+        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+            NotificationWorker.class,
+            24,
+            TimeUnit.HOURS
+        ).build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "daily_recommendations",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        );
+        Logger.d("App", "Daily recommendations work scheduled");
+    }
+
+    private void scheduleDeadlineRemindersWork() {
+        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+            DeadlineReminderWorker.class,
+            24,
+            TimeUnit.HOURS
+        ).build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "deadline_reminders",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        );
+        Logger.d("App", "Deadline reminders work scheduled");
+    }
     
     private void initializeDatabase() {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 AppDatabase db = AppDatabase.getInstance(this);
-                
-                // Check if opportunity database is empty
-                List<Opportunity> existing = db.opportunityDao().getAllOpportunities();
-                
-                if (existing == null || existing.isEmpty()) {
-                    Logger.d("App", "Database empty, generating sample data...");
-                    
-                    // Populate with comprehensive sample data (120+ opportunities)
-                    List<Opportunity> opportunities = SampleDataGenerator.generateOpportunities(120);
-                    
-                    int count = 0;
-                    for (Opportunity opp : opportunities) {
-                        db.opportunityDao().insert(opp);
-                        count++;
-                    }
-                    
-                    Logger.d("App", "Inserted " + count + " opportunities into database");
-                } else {
-                    Logger.d("App", "Database already populated with " + existing.size() + " opportunities");
-                }
-                
+
                 // Initialize interview questions if empty
                 List<com.example.myapplication.model.InterviewQuestion> existingQuestions = 
                     db.interviewQuestionDao().getQuestionsByDomain("SDE");

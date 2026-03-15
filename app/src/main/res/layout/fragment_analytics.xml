@@ -36,7 +36,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tv_total_applications"
+                        android:id="@+id/tvTotalApplications"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="24"
@@ -75,7 +75,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tv_interviews_scheduled"
+                        android:id="@+id/tvInterviewCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="8"
@@ -113,7 +113,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tv_success_rate"
+                        android:id="@+id/tvSuccessRate"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="67%"
@@ -155,7 +155,7 @@
             app:cardElevation="2dp">
 
             <com.github.mikephil.charting.charts.PieChart
-                android:id="@+id/chart_application_status"
+                android:id="@+id/pieChartStatus"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_margin="12dp" />
@@ -201,7 +201,7 @@
                         android:textSize="14sp" />
                     
                     <TextView
-                        android:id="@+id/tv_offers_received"
+                        android:id="@+id/tvOffersCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -230,7 +230,7 @@
                         android:textSize="14sp" />
                     
                     <TextView
-                        android:id="@+id/tv_interview_readiness"
+                        android:id="@+id/tvReadinessScore"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0%"
@@ -259,7 +259,7 @@
                         android:textSize="14sp" />
                     
                     <TextView
-                        android:id="@+id/tv_practice_attempts"
+                        android:id="@+id/tvPracticeAttempts"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -288,7 +288,7 @@
                         android:textSize="14sp" />
                     
                     <TextView
-                        android:id="@+id/tv_average_score"
+                        android:id="@+id/tvAvgScore"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0.0/100"
@@ -323,6 +323,14 @@
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExportCsv"
+            style="@style/Widget.App.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Export to CSV 📊" />
 
     </LinearLayout>
 

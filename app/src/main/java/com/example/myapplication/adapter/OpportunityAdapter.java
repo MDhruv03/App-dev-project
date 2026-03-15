@@ -27,6 +27,7 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
     public interface OnOpportunityClickListener {
         void onApplyClick(Opportunity opportunity);
         void onSaveClick(Opportunity opportunity);
+        void onShareClick(Opportunity opportunity);
         void onOpportunityClick(Opportunity opportunity);
     }
     
@@ -71,9 +72,11 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
         Chip chipLocation;
         Chip chipPaid;
         TextView tvMatchPercentage;
+        TextView tvMatchScore;
         TextView tvDeadline;
         MaterialButton btnApply;
         ImageButton btnSave;
+        ImageButton btnShare;
         
         public OpportunityViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -85,9 +88,11 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
             chipLocation = itemView.findViewById(R.id.chip_location);
             chipPaid = itemView.findViewById(R.id.chip_paid);
             tvMatchPercentage = itemView.findViewById(R.id.tv_match_percentage);
+            tvMatchScore = itemView.findViewById(R.id.tvMatchScore);
             tvDeadline = itemView.findViewById(R.id.tv_deadline);
             btnApply = itemView.findViewById(R.id.btn_apply);
             btnSave = itemView.findViewById(R.id.btn_save);
+            btnShare = itemView.findViewById(R.id.btnShare);
         }
         
         public void bind(Opportunity opportunity) {
@@ -107,6 +112,14 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
             
             // Set match percentage
             tvMatchPercentage.setText(opportunity.getMatchPercentage() + "%");
+
+            int points = (int) opportunity.getRecommendationScore();
+            if (points > 0) {
+                tvMatchScore.setVisibility(View.VISIBLE);
+                tvMatchScore.setText("Match: " + points + " pts");
+            } else {
+                tvMatchScore.setVisibility(View.GONE);
+            }
             
             // Set deadline
             if (opportunity.getDeadline() != null) {
@@ -130,6 +143,12 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
             btnSave.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onSaveClick(opportunity);
+                }
+            });
+
+            btnShare.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onShareClick(opportunity);
                 }
             });
         }

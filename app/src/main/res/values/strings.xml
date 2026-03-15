@@ -62,4 +62,10 @@
     <string name="total_applications">Total Applications</string>
     <string name="interviews_scheduled">Interviews Scheduled</string>
     <string name="success_rate">Success Rate</string>
+    <string name="pending_sync_count">Pending sync: %1$d</string>
+    <string name="last_synced_format">Last synced: %1$s</string>
+    <string name="never_synced">Last synced: not yet</string>
+    <string name="sync_now">Sync now</string>
+    <string name="syncing">Syncing...</string>
+    <string name="sync_started">Sync started</string>
 </resources>

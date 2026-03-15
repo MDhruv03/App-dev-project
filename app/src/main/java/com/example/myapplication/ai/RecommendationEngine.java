@@ -2,6 +2,7 @@ package com.example.myapplication.ai;
 
 import com.example.myapplication.model.Opportunity;
 import com.example.myapplication.model.User;
+import com.example.myapplication.model.UserProfile;
 import com.example.myapplication.model.UserPreferences;
 
 import java.util.ArrayList;
@@ -23,6 +24,11 @@ public class RecommendationEngine {
     private static final int PAY_PREFERENCE_WEIGHT = 2;
     private static final int SKILL_MATCH_WEIGHT = 1;
     private static final int DEADLINE_PROXIMITY_WEIGHT = 1;
+    private static final int PROFILE_TYPE_MATCH_WEIGHT = 3;
+    private static final int PROFILE_LOCATION_MATCH_WEIGHT = 2;
+    private static final int PROFILE_PAID_MATCH_WEIGHT = 2;
+    private static final int PROFILE_SKILL_MATCH_WEIGHT = 1;
+    private static final int PROFILE_REMOTE_MATCH_WEIGHT = 2;
     
     /**
      * Calculate recommendation score for an opportunity
@@ -211,5 +217,83 @@ public class RecommendationEngine {
         
         long diff = deadline.getTime() - System.currentTimeMillis();
         return diff / (1000 * 60 * 60 * 24);
+    }
+
+    public static List<Opportunity> getRecommended(List<Opportunity> all, UserProfile profile) {
+        if (all == null || all.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Opportunity> ranked = new ArrayList<>(all);
+        for (Opportunity opportunity : ranked) {
+            int score = calculateProfileScore(opportunity, profile);
+            opportunity.setRecommendationScore(score);
+        }
+
+        ranked.sort((o1, o2) -> Double.compare(o2.getRecommendationScore(), o1.getRecommendationScore()));
+        return ranked.subList(0, Math.min(10, ranked.size()));
+    }
+
+    private static int calculateProfileScore(Opportunity opportunity, UserProfile profile) {
+        if (opportunity == null || profile == null) {
+            return 0;
+        }
+
+        int score = 0;
+
+        String opportunityType = safeLower(opportunity.getType());
+        for (String preferredRole : splitCsv(profile.getPreferredRoles())) {
+            String role = safeLower(preferredRole);
+            if (!role.isEmpty() && !opportunityType.isEmpty() &&
+                    (role.contains(opportunityType) || opportunityType.contains(role))) {
+                score += PROFILE_TYPE_MATCH_WEIGHT;
+                break;
+            }
+        }
+
+        String preferredLocation = safeLower(profile.getPreferredLocation());
+        String opportunityLocation = safeLower(opportunity.getLocation());
+        if (!preferredLocation.isEmpty() && opportunityLocation.contains(preferredLocation)) {
+            score += PROFILE_LOCATION_MATCH_WEIGHT;
+        }
+
+        if (profile.isPaidPreference() && opportunity.isPaid()) {
+            score += PROFILE_PAID_MATCH_WEIGHT;
+        }
+
+        String title = safeLower(opportunity.getTitle());
+        String description = safeLower(opportunity.getDescription());
+        for (String skill : splitCsv(profile.getSkills())) {
+            String normalizedSkill = safeLower(skill);
+            if (!normalizedSkill.isEmpty() &&
+                    (title.contains(normalizedSkill) || description.contains(normalizedSkill))) {
+                score += PROFILE_SKILL_MATCH_WEIGHT;
+            }
+        }
+
+        if ("remote".equalsIgnoreCase(profile.getJobTypePreference()) && opportunity.isRemote()) {
+            score += PROFILE_REMOTE_MATCH_WEIGHT;
+        }
+
+        return score;
+    }
+
+    private static List<String> splitCsv(String csv) {
+        List<String> result = new ArrayList<>();
+        if (csv == null || csv.trim().isEmpty()) {
+            return result;
+        }
+
+        String[] parts = csv.split(",");
+        for (String part : parts) {
+            if (part != null && !part.trim().isEmpty()) {
+                result.add(part.trim());
+            }
+        }
+        return result;
+    }
+
+    private static String safeLower(String value) {
+        return value == null ? "" : value.toLowerCase();
     }
 }

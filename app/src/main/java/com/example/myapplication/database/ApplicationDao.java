@@ -3,6 +3,7 @@ package com.example.myapplication.database;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
@@ -15,6 +16,12 @@ public interface ApplicationDao {
     
     @Insert
     long insert(Application application);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    long upsert(Application application);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<Application> applications);
     
     @Update
     void update(Application application);

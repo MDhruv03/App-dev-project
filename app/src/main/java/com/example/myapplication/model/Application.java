@@ -7,11 +7,12 @@ import androidx.room.TypeConverters;
 
 import com.example.myapplication.database.Converters;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Entity(tableName = "applications")
 @TypeConverters(Converters.class)
-public class Application {
+public class Application implements Serializable {
     @PrimaryKey(autoGenerate = true)
     private int id;
     

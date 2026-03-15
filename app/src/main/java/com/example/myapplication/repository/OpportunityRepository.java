@@ -5,7 +5,11 @@ import android.content.Context;
 import com.example.myapplication.database.AppDatabase;
 import com.example.myapplication.database.OpportunityDao;
 import com.example.myapplication.model.Opportunity;
-import com.example.myapplication.network.MockApiService;
+import com.example.myapplication.network.ApiCallback;
+import com.example.myapplication.network.ApiService;
+import com.example.myapplication.network.NetworkUtils;
+import com.example.myapplication.network.RetrofitApiService;
+import com.example.myapplication.util.SampleDataGenerator;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -13,14 +17,16 @@ import java.util.concurrent.Executors;
 
 public class OpportunityRepository {
     
+    private final Context appContext;
     private final OpportunityDao opportunityDao;
-    private final MockApiService apiService;
+    private final ApiService apiService;
     private final ExecutorService executorService;
     
     public OpportunityRepository(Context context) {
+        appContext = context.getApplicationContext();
         AppDatabase database = AppDatabase.getInstance(context);
         opportunityDao = database.opportunityDao();
-        apiService = MockApiService.getInstance();
+        apiService = RetrofitApiService.getInstance();
         executorService = Executors.newSingleThreadExecutor();
     }
     
@@ -34,23 +40,41 @@ public class OpportunityRepository {
         });
     }
     
-    // Get all opportunities (fetch from database, not API)
+    // Network-first sync with local fallback
     public void getAllOpportunities(OnOpportunitiesLoadedListener listener) {
-        executorService.execute(() -> {
-            List<Opportunity> opportunities = opportunityDao.getAllOpportunities();
-            if (listener != null) {
-                listener.onLoaded(opportunities);
+        if (!NetworkUtils.isNetworkAvailable(appContext)) {
+            loadAllFromLocal(listener, "No internet connection. Showing cached opportunities.");
+            return;
+        }
+
+        apiService.fetchOpportunities(new ApiCallback<List<Opportunity>>() {
+            @Override
+            public void onSuccess(List<Opportunity> opportunities) {
+                executorService.execute(() -> {
+                    mergeAndPersist(opportunities);
+                    List<Opportunity> local = opportunityDao.getAllOpportunities();
+                    if (listener != null) {
+                        listener.onLoaded(local);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                loadAllFromLocal(listener, "Failed to sync latest opportunities. Showing cached data.");
             }
         });
     }
     
     // Get recommended opportunities
     public void getRecommendedOpportunities(OnOpportunitiesLoadedListener listener) {
-        executorService.execute(() -> {
-            List<Opportunity> opportunities = opportunityDao.getRecommendedOpportunities();
-            if (listener != null) {
-                listener.onLoaded(opportunities);
-            }
+        getAllOpportunities(opportunities -> {
+            executorService.execute(() -> {
+                List<Opportunity> recommended = opportunityDao.getRecommendedOpportunities();
+                if (listener != null) {
+                    listener.onLoaded(recommended);
+                }
+            });
         });
     }
     
@@ -97,9 +121,48 @@ public class OpportunityRepository {
     // Interfaces for callbacks
     public interface OnOpportunitiesLoadedListener {
         void onLoaded(List<Opportunity> opportunities);
+
+        default void onError(String message) {
+        }
     }
     
     public interface OnOperationCompleteListener {
         void onComplete(boolean success);
+    }
+
+    private void loadAllFromLocal(OnOpportunitiesLoadedListener listener, String fallbackMessage) {
+        executorService.execute(() -> {
+            try {
+                List<Opportunity> opportunities = opportunityDao.getAllOpportunities();
+                if (opportunities == null || opportunities.isEmpty()) {
+                    List<Opportunity> seeded = SampleDataGenerator.generateOpportunities(60);
+                    opportunityDao.insertAll(seeded);
+                    opportunities = opportunityDao.getAllOpportunities();
+                }
+                if (listener != null) {
+                    if (fallbackMessage != null && !fallbackMessage.trim().isEmpty()) {
+                        listener.onError(fallbackMessage);
+                    }
+                    listener.onLoaded(opportunities);
+                }
+            } catch (Exception e) {
+                if (listener != null) {
+                    listener.onError("Unable to load opportunities from local cache.");
+                    listener.onLoaded(java.util.Collections.emptyList());
+                }
+            }
+        });
+    }
+
+    private void mergeAndPersist(List<Opportunity> remoteItems) {
+        if (remoteItems == null || remoteItems.isEmpty()) {
+            return;
+        }
+
+        List<Opportunity> existing = opportunityDao.getAllOpportunitiesSync();
+        OpportunitySyncHelper.mergeLocalStateIntoRemote(remoteItems, existing);
+
+        opportunityDao.deleteAll();
+        opportunityDao.insertAll(remoteItems);
     }
 }
