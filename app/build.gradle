@@ -2,6 +2,23 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+import java.util.Properties
+
+def secrets = new Properties()
+def secretsFile = rootProject.file("secrets.properties")
+if (secretsFile.exists()) {
+    secretsFile.withInputStream { stream ->
+        secrets.load(stream)
+    }
+}
+
+def groqApiKey = (
+        secrets.getProperty("GROQ_API_KEY")
+                ?: project.findProperty("GROQ_API_KEY")
+                ?: System.getenv("GROQ_API_KEY")
+                ?: ""
+)
+
 android {
     namespace = "com.example.myapplication"
     compileSdk = 36
@@ -12,7 +29,7 @@ android {
         targetSdk 36
         versionCode 1
         versionName "1.0"
-        buildConfigField "String", "GROQ_API_KEY", '"' + (project.findProperty("GROQ_API_KEY") ?: "") + '"'
+        buildConfigField "String", "GROQ_API_KEY", '"' + groqApiKey + '"'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

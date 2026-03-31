@@ -123,6 +123,20 @@ Alternatively, set the SDK location manually:
 4. Click the **Run** button
 5. Select your device from the list
 
+### 6. Configure Groq API Key (Required for AI Interview)
+
+For security, do not store API keys in tracked files.
+
+1. Create `secrets.properties` in the project root (same level as `settings.gradle`)
+2. Add this line:
+
+```properties
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+3. Keep `secrets.properties` local only (`.gitignore` already excludes it)
+4. Optional fallback: set `GROQ_API_KEY` as an environment variable instead
+
 ## 📱 Minimum Requirements
 
 - **minSdk**: 24 (Android 7.0 Nougat)
