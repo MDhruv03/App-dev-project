@@ -34,10 +34,13 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02"
             android:text="Personal Info"
             android:textColor="@color/on_background"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -73,10 +76,13 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Preferences"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02"
+            android:text="Preferences &amp; Goals"
             android:textColor="@color/on_background"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -140,19 +146,27 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Resume"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02"
+            android:text="AI Resume Parsing"
             android:textColor="@color/on_background"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUploadResume"
-            style="@style/Widget.Material3.Button.TonalButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Upload Resume" />
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="Upload PDF Resume"
+            android:textSize="15sp"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_upload"
+            app:iconGravity="textStart"
+            app:strokeColor="@color/secondary" />
 
         <TextView
             android:id="@+id/tvResumeFileName"
@@ -172,11 +186,15 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSaveProfile"
-            style="@style/Widget.App.Button"
+            style="@style/Widget.MaterialComponents.Button"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Save Profile" />
+            android:layout_height="56dp"
+            android:layout_marginTop="36dp"
+            android:layout_marginBottom="32dp"
+            android:text="Save Profile"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            app:cornerRadius="14dp" />
 
     </LinearLayout>
 

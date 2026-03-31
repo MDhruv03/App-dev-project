@@ -261,7 +261,7 @@ public class RetrofitApiService implements ApiService {
         opportunity.setDeadline(calendar.getTime());
 
         opportunity.setRecommendationScore(calculateRecommendationScore(job));
-        opportunity.setMatchPercentage(50 + Math.abs(generatedId % 51));
+        opportunity.setMatchPercentage(0); // Will be calculated dynamically in ViewModel based on active Resume
         opportunity.setPopularityScore(100 + Math.abs(generatedId % 900));
 
         return opportunity;
@@ -269,7 +269,9 @@ public class RetrofitApiService implements ApiService {
 
     private double calculateRecommendationScore(RemotiveJob job) {
         int seed = Math.abs((job.title + "|" + job.company_name + "|" + job.category).hashCode());
-        double score = 58 + (seed % 38);
+        // Add a random variation so the feed looks fresh on every app launch
+        double randomDrift = (Math.random() * 24) - 12;
+        double score = 58 + (seed % 38) + randomDrift;
 
         String category = nonNull(job.category).toLowerCase(Locale.ROOT);
         if (category.contains("software") || category.contains("developer") || category.contains("engineering")) {
@@ -280,6 +282,8 @@ public class RetrofitApiService implements ApiService {
         }
         if (score > 99) {
             score = 99;
+        } else if (score < 40) {
+            score = 40;
         }
         return score;
     }

@@ -212,13 +212,18 @@ public class HomeFragment extends Fragment {
     }
     
     private void applyToOpportunity(Opportunity opportunity) {
+        if (opportunity.isApplied()) {
+            Toast.makeText(requireContext(), "Already applied to " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
+            return;
+        }
         viewModel.markAsApplied(opportunity);
-        Toast.makeText(requireContext(), "Applied to " + opportunity.getTitle(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "Application saved in Tracker", Toast.LENGTH_SHORT).show();
     }
     
     private void saveOpportunity(Opportunity opportunity) {
+        boolean wasSaved = opportunity.isSaved();
         viewModel.toggleSaveStatus(opportunity);
-        Toast.makeText(requireContext(), opportunity.isSaved() ? "Saved!" : "Unsaved", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), wasSaved ? "Removed from saved" : "Saved!", Toast.LENGTH_SHORT).show();
     }
 
     private void shareOpportunity(Opportunity opportunity) {

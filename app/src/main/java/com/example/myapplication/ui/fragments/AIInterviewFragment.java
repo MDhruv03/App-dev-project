@@ -19,6 +19,7 @@ import com.example.myapplication.model.InterviewQuestion;
 import com.example.myapplication.model.UserProfile;
 import com.example.myapplication.repository.UserProfileRepository;
 import com.example.myapplication.ui.activities.InterviewActivity;
+import com.example.myapplication.ui.activities.LiveInterviewActivity;
 import com.example.myapplication.ui.activities.QuizActivity;
 import com.example.myapplication.viewmodel.InterviewViewModel;
 import com.google.android.material.button.MaterialButton;
@@ -34,6 +35,7 @@ public class AIInterviewFragment extends Fragment {
     private ChipGroup domainChipGroup;
     private MaterialButton btnTakeSkillQuiz;
     private MaterialButton btnStartInterview;
+    private MaterialButton btnStartLiveInterview;
     private RecyclerView recyclerQuestions;
     private InterviewViewModel viewModel;
     private InterviewQuestionAdapter adapter;
@@ -55,6 +57,7 @@ public class AIInterviewFragment extends Fragment {
         setupDomainSelection();
         setupQuizButton();
         setupStartButton();
+        setupLiveInterviewButton();
         
         loadInitialData();
     }
@@ -66,6 +69,7 @@ public class AIInterviewFragment extends Fragment {
         domainChipGroup = view.findViewById(R.id.domain_chip_group);
         btnTakeSkillQuiz = view.findViewById(R.id.btn_take_skill_quiz);
         btnStartInterview = view.findViewById(R.id.btn_start_interview);
+        btnStartLiveInterview = view.findViewById(R.id.btn_start_live_interview);
         recyclerQuestions = view.findViewById(R.id.recycler_questions);
     }
     
@@ -159,6 +163,14 @@ public class AIInterviewFragment extends Fragment {
                     startActivity(intent);
                 });
             }).start();
+        });
+    }
+
+    private void setupLiveInterviewButton() {
+        btnStartLiveInterview.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LiveInterviewActivity.class);
+            intent.putExtra("DOMAIN", selectedDomain);
+            startActivity(intent);
         });
     }
     

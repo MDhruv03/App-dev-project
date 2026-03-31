@@ -1,36 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors - Modern Blue -->
-    <color name="primary">#2563EB</color>
-    <color name="primary_dark">#1E40AF</color>
-    <color name="primary_light">#60A5FA</color>
-    <color name="primary_container">#DBEAFE</color>
+    <!-- Vercel/Linear style Modern Palette -->
+    <!-- Primary - Sleek Midnight/Slate -->
+    <color name="primary">#0F172A</color>
+    <color name="primary_dark">#020617</color>
+    <color name="primary_light">#334155</color>
+    <color name="primary_container">#F1F5F9</color>
     
-    <!-- Secondary Colors - Elegant Purple -->
-    <color name="secondary">#7C3AED</color>
-    <color name="secondary_dark">#6D28D9</color>
-    <color name="secondary_light">#A78BFA</color>
-    <color name="secondary_container">#EDE9FE</color>
+    <!-- Secondary Colors - Electric Blue for Actions -->
+    <color name="secondary">#3B82F6</color>
+    <color name="secondary_dark">#2563EB</color>
+    <color name="secondary_light">#60A5FA</color>
+    <color name="secondary_container">#EFF6FF</color>
     
-    <!-- Tertiary Colors - Accent Green -->
-    <color name="tertiary">#059669</color>
-    <color name="tertiary_light">#10B981</color>
-    <color name="tertiary_container">#D1FAE5</color>
+    <!-- Tertiary Colors - Accent Indigo -->
+    <color name="tertiary">#6366F1</color>
+    <color name="tertiary_light">#818CF8</color>
+    <color name="tertiary_container">#EEF2FF</color>
     
     <!-- Neutral Colors -->
-    <color name="background">#FFFFFF</color>
-    <color name="surface">#F9FAFB</color>
-    <color name="surface_variant">#F3F4F6</color>
-    <color name="outline">#E5E7EB</color>
-    <color name="outline_variant">#F3F4F6</color>
-    <color name="divider">#E5E7EB</color>
+    <color name="background">#F8FAFC</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F1F5F9</color>
+    <color name="outline">#E2E8F0</color>
+    <color name="outline_variant">#CBD5E1</color>
+    <color name="divider">#F1F5F9</color>
     
     <!-- Text Colors -->
     <color name="on_primary">#FFFFFF</color>
     <color name="on_secondary">#FFFFFF</color>
-    <color name="on_background">#111827</color>
-    <color name="on_surface">#374151</color>
-    <color name="on_surface_variant">#6B7280</color>
+    <color name="on_background">#0F172A</color>
+    <color name="on_surface">#334155</color>
+    <color name="on_surface_variant">#64748B</color>
     
     <!-- Status Colors -->
     <color name="success">#10B981</color>
@@ -38,11 +39,11 @@
     <color name="error">#EF4444</color>
     <color name="info">#3B82F6</color>
     
-    <!-- Status Background -->
-    <color name="success_bg">#D1FAE5</color>
-    <color name="warning_bg">#FEF3C7</color>
-    <color name="error_bg">#FEE2E2</color>
-    <color name="info_bg">#DBEAFE</color>
+    <!-- Status Background (Soft pastels) -->
+    <color name="success_bg">#ECFDF5</color>
+    <color name="warning_bg">#FFFBEB</color>
+    <color name="error_bg">#FEF2F2</color>
+    <color name="info_bg">#EFF6FF</color>
     
     <!-- Base Colors -->
     <color name="black">#000000</color>
@@ -50,16 +51,18 @@
     
     <!-- Card & Elevation -->
     <color name="card_background">#FFFFFF</color>
-    <color name="shadow">#1A000000</color>    
+    <color name="shadow">#05000000</color>    
+    
     <!-- Application Status Chip Colors -->
     <color name="chip_saved">#60A5FA</color>
-    <color name="chip_applied">#A78BFA</color>
+    <color name="chip_applied">#818CF8</color>
     <color name="chip_interview">#F59E0B</color>
     <color name="chip_rejected">#EF4444</color>
     <color name="chip_accepted">#10B981</color>
-    <color name="chip_default">#9CA3AF</color>
+    <color name="chip_default">#CBD5E1</color>
     
     <!-- Difficulty Colors -->
     <color name="difficulty_easy">#10B981</color>
     <color name="difficulty_medium">#F59E0B</color>
-    <color name="difficulty_hard">#EF4444</color></resources>
+    <color name="difficulty_hard">#EF4444</color>
+</resources>

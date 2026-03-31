@@ -1,45 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="280dp"
+    android:layout_width="300dp"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginVertical="10dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
     app:cardBackgroundColor="@color/card_background"
-    app:strokeWidth="0dp">
+    app:strokeColor="@color/outline"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:padding="20dp">
 
-        <!-- Match Badge -->
-        <TextView
-            android:id="@+id/tv_match_badge"
+        <!-- Top Right Match Badge -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/tv_match_badge_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/match_background"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="95% Match"
-            android:textColor="@color/primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/surface_variant"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/outline_variant"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+            
+            <TextView
+                android:id="@+id/tv_match_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="95% Match"
+                android:textColor="@color/primary"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-black" />
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Company Logo -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/company_logo_container"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
             app:cardBackgroundColor="@color/primary_container"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/outline"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_match_badge">
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/company_initial"
@@ -49,8 +62,7 @@
                 android:text="G"
                 android:textColor="@color/primary"
                 android:textSize="20sp"
-                android:textStyle="bold" />
-
+                android:fontFamily="sans-serif-black" />
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Title -->
@@ -58,81 +70,104 @@
             android:id="@+id/tv_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:ellipsize="end"
             android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02"
             android:maxLines="2"
             android:text="Senior Backend Engineer"
             android:textColor="@color/on_background"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/company_logo_container" />
 
-        <!-- Company Name -->
+        <!-- Company Name and Location in one line -->
         <TextView
             android:id="@+id/tv_company"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Google"
+            android:text="Google Inc."
+            android:fontFamily="sans-serif"
             android:textColor="@color/on_surface_variant"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_title" />
+            
+        <TextView
+            android:id="@+id/tv_dot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="•"
+            android:textColor="@color/on_surface_variant"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@id/tv_company"
+            app:layout_constraintTop_toTopOf="@id/tv_company" />
 
-        <!-- Location -->
         <TextView
             android:id="@+id/tv_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:drawablePadding="4dp"
+            android:layout_marginStart="4dp"
             android:text="Remote"
             android:textColor="@color/on_surface_variant"
-            android:textSize="12sp"
-            app:drawableStartCompat="@android:drawable/ic_dialog_map"
-            app:drawableTint="@color/on_surface_variant"
-            app:layout_constraintStart_toStartOf="parent"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@id/tv_dot"
+            app:layout_constraintTop_toTopOf="@id/tv_company" />
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="@color/divider"
             app:layout_constraintTop_toBottomOf="@id/tv_company" />
 
         <!-- Type Chip -->
+        <!-- Just keep type chip, other chips might overflow 300dp -->
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_type"
-            style="@style/Widget.Material3.Chip.Assist"
+            style="@style/Widget.MaterialComponents.Chip.Entry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif-medium"
             android:text="@string/internship"
-            android:textSize="11sp"
-            app:chipBackgroundColor="@color/info_bg"
-            app:chipMinHeight="24dp"
+            android:textColor="@color/secondary"
+            android:textSize="12sp"
+            app:chipBackgroundColor="@color/secondary_container"
+            app:chipCornerRadius="8dp"
+            app:chipMinHeight="32dp"
+            app:chipStrokeWidth="0dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_location" />
+            app:layout_constraintTop_toBottomOf="@id/divider" />
 
         <!-- Deadline -->
         <TextView
             android:id="@+id/tv_deadline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:text="Deadline: Dec 31"
             android:textColor="@color/warning"
-            android:textSize="11sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/chip_type" />
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-medium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/chip_type"
+            app:layout_constraintTop_toTopOf="@id/chip_type" />
 
         <TextView
             android:id="@+id/tvMatchScore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Match: 0 pts"
+            android:layout_marginTop="16dp"
+            android:text="Matching parameters: 0 pts"
             android:textColor="@color/on_surface_variant"
-            android:textSize="11sp"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_deadline" />
+            app:layout_constraintTop_toBottomOf="@id/chip_type" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

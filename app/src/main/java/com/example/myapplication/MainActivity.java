@@ -26,65 +26,70 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         DiagnosticLogger.log("main_activity_onCreate_start");
-        try {
-            setContentView(R.layout.activity_main);
+        
+        setContentView(R.layout.activity_main);
 
-            BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-            ImageButton btnToggleDarkMode = findViewById(R.id.btnToggleDarkMode);
-            PreferencesManager preferencesManager = new PreferencesManager(this);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        ImageButton btnToggleDarkMode = findViewById(R.id.btnToggleDarkMode);
+        ImageButton btnProfile = findViewById(R.id.btn_profile);
+        PreferencesManager preferencesManager = new PreferencesManager(this);
 
-            btnToggleDarkMode.setOnClickListener(v -> {
-                int currentMode = getResources().getConfiguration().uiMode
-                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-                boolean currentlyDark = currentMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-                int targetMode = currentlyDark
-                    ? AppCompatDelegate.MODE_NIGHT_NO
-                    : AppCompatDelegate.MODE_NIGHT_YES;
+        btnToggleDarkMode.setOnClickListener(v -> {
+            int currentMode = getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            boolean currentlyDark = currentMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            int targetMode = currentlyDark
+                ? AppCompatDelegate.MODE_NIGHT_NO
+                : AppCompatDelegate.MODE_NIGHT_YES;
 
-                preferencesManager.putBoolean(KEY_DARK_MODE, !currentlyDark);
-                AppCompatDelegate.setDefaultNightMode(targetMode);
-            });
+            preferencesManager.putBoolean(KEY_DARK_MODE, !currentlyDark);
+            AppCompatDelegate.setDefaultNightMode(targetMode);
+        });
 
-            if (savedInstanceState == null) {
-                DiagnosticLogger.log("main_activity_default_fragment_home");
-                getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.nav_host_fragment, new HomeFragment())
-                    .commit();
+        btnProfile.setOnClickListener(v -> {
+            DiagnosticLogger.log("main_activity_profile_opened");
+            getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                .replace(R.id.nav_host_fragment, new ProfileFragment())
+                .commit();
+        });
+
+        if (savedInstanceState == null) {
+            DiagnosticLogger.log("main_activity_default_fragment_home");
+            getSupportFragmentManager().beginTransaction()
+                .replace(R.id.nav_host_fragment, new HomeFragment())
+                .commit();
+        }
+
+        bottomNav.setOnItemSelectedListener(item -> {
+            Fragment fragment = null;
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.navigation_home) {
+                fragment = new HomeFragment();
+            } else if (itemId == R.id.navigation_saved) {
+                fragment = new SavedFragment();
+            } else if (itemId == R.id.navigation_tracker) {
+                fragment = new TrackerFragment();
+            } else if (itemId == R.id.navigation_ai) {
+                fragment = new AIInterviewFragment();
+            } else if (itemId == R.id.navigation_roadmap) {
+                fragment = new RoadmapFragment();
+            } else if (itemId == R.id.navigation_analytics) {
+                fragment = new AnalyticsFragment();
             }
 
-            bottomNav.setOnItemSelectedListener(item -> {
-                Fragment fragment = null;
-                int itemId = item.getItemId();
-
-                if (itemId == R.id.navigation_home) {
-                    fragment = new HomeFragment();
-                } else if (itemId == R.id.navigation_saved) {
-                    fragment = new SavedFragment();
-                } else if (itemId == R.id.navigation_tracker) {
-                    fragment = new TrackerFragment();
-                } else if (itemId == R.id.navigation_ai) {
-                    fragment = new AIInterviewFragment();
-                } else if (itemId == R.id.navigation_roadmap) {
-                    fragment = new RoadmapFragment();
-                } else if (itemId == R.id.navigation_analytics) {
-                    fragment = new AnalyticsFragment();
-                } else if (itemId == R.id.navigation_profile) {
-                    fragment = new ProfileFragment();
-                }
-
-                if (fragment != null) {
-                    DiagnosticLogger.log("main_activity_nav_select:" + itemId);
-                    getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.nav_host_fragment, fragment)
-                        .commit();
-                    return true;
-                }
-                return false;
-            });
-            DiagnosticLogger.log("main_activity_onCreate_complete");
-        } catch (Throwable throwable) {
-            DiagnosticLogger.logError("main_activity_onCreate_failure", throwable);
-            throw throwable;
-        }
+            if (fragment != null) {
+                DiagnosticLogger.log("main_activity_nav_select:" + itemId);
+                getSupportFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                    .replace(R.id.nav_host_fragment, fragment)
+                    .commit();
+                return true;
+            }
+            return false;
+        });
+        
+        DiagnosticLogger.log("main_activity_onCreate_complete");
     }
 }

@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -31,12 +32,16 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
         void onOpportunityClick(Opportunity opportunity);
     }
     
+    private int lastPosition = -1;
+
     public OpportunityAdapter() {
         this.opportunities = new ArrayList<>();
     }
     
     public void setOpportunities(List<Opportunity> opportunities) {
         this.opportunities = opportunities;
+        // Reset animation state when new data loads
+        this.lastPosition = -1;
         notifyDataSetChanged();
     }
     
@@ -56,6 +61,22 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
     public void onBindViewHolder(@NonNull OpportunityViewHolder holder, int position) {
         Opportunity opportunity = opportunities.get(position);
         holder.bind(opportunity);
+        setAnimation(holder.itemView, position);
+    }
+
+    private void setAnimation(View viewToAnimate, int position) {
+        // Only animate new items sliding in from the bottom
+        if (position > lastPosition) {
+            viewToAnimate.setTranslationY(150f);
+            viewToAnimate.setAlpha(0f);
+            viewToAnimate.animate()
+                    .translationY(0f)
+                    .alpha(1f)
+                    .setDuration(400)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+            lastPosition = position;
+        }
     }
     
     @Override
@@ -139,6 +160,16 @@ public class OpportunityAdapter extends RecyclerView.Adapter<OpportunityAdapter.
                     listener.onApplyClick(opportunity);
                 }
             });
+
+            if (opportunity.isApplied()) {
+                btnApply.setText("Applied");
+                btnApply.setEnabled(false);
+                btnApply.setBackgroundTintList(ContextCompat.getColorStateList(itemView.getContext(), R.color.success));
+            } else {
+                btnApply.setText(itemView.getContext().getString(R.string.apply));
+                btnApply.setEnabled(true);
+                btnApply.setBackgroundTintList(ContextCompat.getColorStateList(itemView.getContext(), R.color.primary));
+            }
             
             btnSave.setOnClickListener(v -> {
                 if (listener != null) {

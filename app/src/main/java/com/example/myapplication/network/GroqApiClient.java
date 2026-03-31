@@ -40,6 +40,84 @@ public final class GroqApiClient {
         void onError(String message);
     }
 
+    /** Callback for the stateful interview conversation mode. */
+    public interface InterviewCallback {
+        /** Called with Groq's raw reply text (feedback + optional follow-up). */
+        void onReply(String reply);
+        void onError(String message);
+    }
+
+    /**
+     * Stateful interview conversation. Sends the FULL message history so the model
+     * can do cross-question follow-ups, give contextual feedback, and never re-introduce itself.
+     *
+     * @param history  All prior messages: [{"role":"system",...}, {"role":"user",...}, ...]
+     * @param callback Called on the background thread → caller must runOnUiThread()
+     */
+    public static void conductInterview(
+        JSONArray history,
+        InterviewCallback callback
+    ) {
+        if (callback == null) return;
+        String apiKey = BuildConfig.GROQ_API_KEY;
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            callback.onError("Missing Groq API key");
+            return;
+        }
+
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("model", MODEL);
+            payload.put("messages", history);
+            payload.put("max_tokens", 120);   // Forces 2-3 sentence replies — keeps it conversational
+            payload.put("temperature", 0.85); // Slightly higher = more varied, less robotic phrasing
+
+        } catch (JSONException e) {
+            callback.onError("Failed to build request");
+            return;
+        }
+
+        RequestBody body = RequestBody.create(payload.toString(), JSON);
+        Request request = new Request.Builder()
+            .url(ENDPOINT)
+            .post(body)
+            .header("Authorization", "Bearer " + apiKey)
+            .header("Content-Type", "application/json")
+            .build();
+
+        HTTP_CLIENT.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                callback.onError("Network error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                try {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        callback.onError("Groq HTTP " + response.code());
+                        return;
+                    }
+                    String raw = response.body().string();
+                    JSONObject json = new JSONObject(raw);
+                    JSONArray choices = json.optJSONArray("choices");
+                    if (choices == null || choices.length() == 0) {
+                        callback.onError("Empty choices");
+                        return;
+                    }
+                    String content = choices.getJSONObject(0)
+                        .getJSONObject("message")
+                        .optString("content", "").trim();
+                    callback.onReply(content);
+                } catch (Exception e) {
+                    callback.onError("Parse error: " + e.getMessage());
+                } finally {
+                    response.close();
+                }
+            }
+        });
+    }
+
     public static void evaluateAnswer(
         String question,
         String userAnswer,

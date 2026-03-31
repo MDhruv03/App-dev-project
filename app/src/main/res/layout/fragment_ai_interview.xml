@@ -176,6 +176,14 @@
             android:paddingVertical="14dp"
             android:text="@string/start_interview" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_start_live_interview"
+            style="@style/Widget.App.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Start Real AI Company Interview" />
+
         <!-- Practice Topics -->
         <TextView
             android:layout_width="wrap_content"

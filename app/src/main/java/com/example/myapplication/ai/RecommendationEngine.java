@@ -219,6 +219,21 @@ public class RecommendationEngine {
         return diff / (1000 * 60 * 60 * 24);
     }
 
+    public static int getMatchPercentage(Opportunity opportunity, UserProfile profile) {
+        if (profile == null) return 0;
+        int score = calculateProfileScore(opportunity, profile);
+        
+        // Normalize score to 100%. Max realistic score is around 12.
+        int percentage = (int) ((score * 100.0) / 12);
+        percentage = Math.max(0, Math.min(100, percentage));
+        
+        // Baseline boost for any match
+        if (percentage < 45 && score > 0) {
+            percentage = 45 + (percentage / 2);
+        }
+        return percentage;
+    }
+
     public static List<Opportunity> getRecommended(List<Opportunity> all, UserProfile profile) {
         if (all == null || all.isEmpty()) {
             return new ArrayList<>();
