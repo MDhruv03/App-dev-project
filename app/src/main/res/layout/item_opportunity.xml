@@ -3,31 +3,29 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="10dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
-    app:cardBackgroundColor="@color/card_background"
     app:strokeColor="@color/outline"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="20dp">
+        android:padding="16dp">
 
-        <!-- Header Row (Icon + Title + Save) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/company_logo_container"
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             app:cardBackgroundColor="@color/primary_container"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/outline"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="@color/outline"
+            app:strokeWidth="1dp">
 
             <TextView
                 android:id="@+id/company_initial"
@@ -36,82 +34,71 @@
                 android:gravity="center"
                 android:text="G"
                 android:textColor="@color/primary"
-                android:textSize="22sp"
-                android:fontFamily="sans-serif-black" />
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- Apply Button in top right (Web standard is CTA in header or footer, let's go footer for wide buttons, so we put Share/Save in header) -->
-        <ImageButton
-            android:id="@+id/btn_save"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/save"
-            android:src="@android:drawable/ic_menu_save"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/on_surface_variant" />
-            
-        <ImageButton
-            android:id="@+id/btnShare"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Share"
-            android:src="@android:drawable/ic_menu_share"
-            app:layout_constraintEnd_toStartOf="@id/btn_save"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/on_surface_variant" />
 
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="-0.02"
             android:maxLines="2"
             android:text="Software Development Engineer Intern"
             android:textColor="@color/on_background"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/company_logo_container" />
+            app:layout_constraintEnd_toStartOf="@id/btnShare"
+            app:layout_constraintStart_toEndOf="@id/company_logo_container"
+            app:layout_constraintTop_toTopOf="@id/company_logo_container" />
 
         <TextView
             android:id="@+id/tv_company"
+            style="@style/TextAppearance.App.Muted"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:layout_marginTop="4dp"
-            android:fontFamily="sans-serif"
-            android:text="Google Inc. • Mountain View, CA"
-            android:textColor="@color/on_surface_variant"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginEnd="8dp"
+            android:text="Google Inc."
+            app:layout_constraintEnd_toStartOf="@id/btnShare"
+            app:layout_constraintStart_toEndOf="@id/company_logo_container"
             app:layout_constraintTop_toBottomOf="@id/tv_title" />
 
-        <!-- Web-like Subdivider -->
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:background="@color/divider"
-            app:layout_constraintTop_toBottomOf="@id/tv_company" />
+        <ImageButton
+            android:id="@+id/btn_save"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/bg_toolbar_icon"
+            android:contentDescription="@string/save"
+            android:src="@android:drawable/ic_menu_save"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/on_surface_variant" />
 
-        <!-- Crisp Tags Container -->
+        <ImageButton
+            android:id="@+id/btnShare"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_toolbar_icon"
+            android:contentDescription="@string/share"
+            android:src="@android:drawable/ic_menu_share"
+            app:layout_constraintEnd_toStartOf="@id/btn_save"
+            app:layout_constraintTop_toTopOf="@id/btn_save"
+            app:tint="@color/on_surface_variant" />
+
         <HorizontalScrollView
             android:id="@+id/chips_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:scrollbars="none"
-            app:layout_constraintTop_toBottomOf="@id/divider">
-            
+            app:layout_constraintTop_toBottomOf="@id/company_logo_container">
+
             <LinearLayout
                 android:id="@+id/chips_container"
                 android:layout_width="wrap_content"
@@ -120,135 +107,92 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_type"
-                    style="@style/Widget.MaterialComponents.Chip.Entry"
+                    style="@style/Widget.App.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
-                    android:fontFamily="sans-serif-medium"
                     android:text="@string/internship"
-                    android:textColor="@color/secondary"
-                    android:textSize="12sp"
-                    app:chipBackgroundColor="@color/secondary_container"
-                    app:chipCornerRadius="8dp"
-                    app:chipMinHeight="32dp"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="@color/secondary_container" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_location"
-                    style="@style/Widget.MaterialComponents.Chip.Entry"
+                    style="@style/Widget.App.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
-                    android:fontFamily="sans-serif-medium"
                     android:text="Remote"
-                    android:textColor="@color/success"
-                    android:textSize="12sp"
-                    app:chipBackgroundColor="@color/success_bg"
-                    app:chipCornerRadius="8dp"
-                    app:chipMinHeight="32dp"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="@color/success_bg" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_paid"
-                    style="@style/Widget.MaterialComponents.Chip.Entry"
+                    style="@style/Widget.App.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:fontFamily="sans-serif-medium"
                     android:text="@string/paid"
-                    android:textColor="@color/tertiary"
-                    android:textSize="12sp"
-                    app:chipBackgroundColor="@color/tertiary_container"
-                    app:chipCornerRadius="8dp"
-                    app:chipMinHeight="32dp"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="@color/tertiary_container" />
 
             </LinearLayout>
+
         </HorizontalScrollView>
 
-        <!-- Match Profile Widget -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/match_container"
+        <LinearLayout
+            android:id="@+id/meta_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/surface_variant"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/outline_variant"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/chips_scroll">
-            
-            <LinearLayout
-                android:layout_width="match_parent"
+
+            <TextView
+                android:id="@+id/tv_match_percentage"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="12dp"
-                android:gravity="center_vertical">
-                
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="AI Match"
-                    android:fontFamily="sans-serif-medium"
-                    android:textColor="@color/on_surface"
-                    android:textSize="13sp" />
-                    
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-                    
-                <TextView
-                    android:id="@+id/tv_match_percentage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="95%"
-                    android:textColor="@color/primary"
-                    android:textSize="15sp"
-                    android:fontFamily="sans-serif-black" />
-            </LinearLayout>
-            
-        </com.google.android.material.card.MaterialCardView>
+                android:background="@drawable/match_background"
+                android:paddingStart="10dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:text="95%"
+                android:textColor="@color/primary"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tv_deadline"
+                style="@style/TextAppearance.App.Muted"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Deadline: Dec 31, 2024"
+                android:textColor="@color/warning" />
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvMatchScore"
+            style="@style/TextAppearance.App.Muted"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Matching parameters: 14 pts"
-            android:textColor="@color/on_surface_variant"
-            android:textSize="12sp"
+            android:text="Match: 14 pts"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/match_container" />
+            app:layout_constraintTop_toBottomOf="@id/meta_row" />
 
-        <TextView
-            android:id="@+id/tv_deadline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Deadline: Dec 31, 2024"
-            android:textColor="@color/warning"
-            android:textSize="12sp"
-            android:fontFamily="sans-serif-medium"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvMatchScore" />
-
-        <!-- Bold Wide Website CTA Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_apply"
-            style="@style/Widget.MaterialComponents.Button"
+            style="@style/Widget.App.Button"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="20dp"
-            android:text="Apply Now"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium"
-            android:textAllCaps="false"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Apply"
             app:icon="@android:drawable/ic_menu_send"
             app:iconGravity="textStart"
             app:iconPadding="8dp"
-            app:cornerRadius="14dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvMatchScore" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

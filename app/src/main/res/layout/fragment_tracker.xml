@@ -9,12 +9,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="0dp">
 
-        <!-- Status Filter Chips -->
+        <TextView
+            style="@style/TextAppearance.App.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tracker" />
+
+        <TextView
+            style="@style/TextAppearance.App.Muted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Manage your application pipeline" />
+
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
             android:scrollbars="none">
 
             <com.google.android.material.chip.ChipGroup
@@ -25,7 +41,7 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_all"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    style="@style/Widget.App.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
@@ -33,28 +49,28 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_applied"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    style="@style/Widget.App.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/applied" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_interview"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    style="@style/Widget.App.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/interview" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_rejected"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    style="@style/Widget.App.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/rejected" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_accepted"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    style="@style/Widget.App.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/accepted" />
@@ -63,58 +79,72 @@
 
         </HorizontalScrollView>
 
-        <TextView
-            android:id="@+id/tvPendingCount"
-            android:layout_width="wrap_content"
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.CardView.Subtle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text=""
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-            android:visibility="gone" />
+            android:layout_marginTop="12dp">
 
-        <TextView
-            android:id="@+id/tvPendingBreakdown"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text=""
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-            android:visibility="gone" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvLastSynced"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/never_synced"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                <TextView
+                    android:id="@+id/tvPendingCount"
+                    style="@style/TextAppearance.App.Muted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:visibility="gone" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSyncNow"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/sync_now"
-            app:icon="@android:drawable/ic_popup_sync" />
+                <TextView
+                    android:id="@+id/tvPendingBreakdown"
+                    style="@style/TextAppearance.App.Muted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text=""
+                    android:visibility="gone" />
 
-        <!-- Applications List -->
+                <TextView
+                    android:id="@+id/tvLastSynced"
+                    style="@style/TextAppearance.App.Muted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/never_synced" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSyncNow"
+                    style="@style/Widget.App.Button.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/sync_now"
+                    app:icon="@android:drawable/ic_popup_sync" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_applications"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="16dp" />
+            android:layout_height="0dp"
+            android:layout_marginTop="14dp"
+            android:layout_weight="1" />
 
     </LinearLayout>
 
-    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab_add_application"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:text="Add Application"
+        android:layout_margin="18dp"
+        android:text="Add"
         app:icon="@android:drawable/ic_input_add" />
 
     <LinearLayout
@@ -127,19 +157,18 @@
         android:visibility="gone">
 
         <TextView
+            style="@style/TextAppearance.App.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="😔"
-            android:textSize="48sp" />
+            android:text="No applications yet" />
 
         <TextView
-            android:layout_width="wrap_content"
+            style="@style/TextAppearance.App.Muted"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
-            android:text="No applications tracked yet. Start applying!"
-            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-            android:textColor="@color/on_surface" />
+            android:text="Tap Add to create your first tracked application" />
 
     </LinearLayout>
 

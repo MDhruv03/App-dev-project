@@ -6,45 +6,41 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <FrameLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true">
 
-        <androidx.core.widget.NestedScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="100dp">
 
             <TextView
+                style="@style/TextAppearance.App.Display"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="-0.03"
-                android:text="Discover"
-                android:textColor="@color/on_background"
-                android:textSize="32sp" />
+                android:text="Discover" />
 
-            <!-- Search Input -->
+            <TextView
+                style="@style/TextAppearance.App.Muted"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Curated roles matched to your goals" />
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/search_input_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/Widget.App.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:hint="@string/search_opportunities"
-                app:boxBackgroundColor="@color/surface"
-                app:boxCornerRadiusBottomEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxStrokeWidth="0dp"
-                app:boxStrokeWidthFocused="1dp"
-                app:boxStrokeColor="@color/secondary"
                 app:endIconMode="clear_text">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -56,11 +52,10 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Filter Chips -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
                 android:scrollbars="none">
 
                 <com.google.android.material.chip.ChipGroup
@@ -71,130 +66,114 @@
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_internship"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/internship" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_job"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/job" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_hackathon"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/hackathon" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_remote_yes"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Remote Yes" />
+                        android:text="Remote" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_remote_no"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Remote No" />
+                        android:text="On-site" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_paid_yes"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Paid Yes" />
+                        android:text="Paid" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_paid_no"
-                        style="@style/Widget.Material3.Chip.Filter"
+                        style="@style/Widget.App.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Paid No" />
+                        android:text="Unpaid" />
 
                 </com.google.android.material.chip.ChipGroup>
 
             </HorizontalScrollView>
 
-            <!-- Recommended Section -->
             <TextView
+                style="@style/TextAppearance.App.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="-0.02"
-                android:text="@string/recommended_for_you"
-                android:textColor="@color/on_background"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="28dp"
+                android:text="@string/recommended_for_you" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvRecommended"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:clipToPadding="false"
-                android:orientation="horizontal"
                 android:paddingEnd="8dp" />
 
-            <!-- All Opportunities -->
             <TextView
+                style="@style/TextAppearance.App.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="-0.02"
-                android:text="All Opportunities"
-                android:textColor="@color/on_background"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="26dp"
+                android:text="All opportunities" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvOpportunities"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:nestedScrollingEnabled="false" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvOpportunities"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:nestedScrollingEnabled="false" />
 
-                <!-- Empty State placed correctly inside scrollable content -->
-                <LinearLayout
-                    android:id="@+id/layoutEmptyState"
-                    android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/layoutEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/TextAppearance.App.Section"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="48dp"
-                    android:layout_marginBottom="48dp"
+                    android:text="No results" />
+
+                <TextView
+                    style="@style/TextAppearance.App.Muted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="24dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔍"
-                        android:textSize="48sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:gravity="center"
-                        android:text="No opportunities found. Pull to refresh!"
-                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                        android:textColor="@color/on_surface" />
-
-                </LinearLayout>
+                    android:text="Try changing filters or pull to refresh" />
 
             </LinearLayout>
 
-        </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
 
-    </FrameLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -7,28 +7,27 @@
     android:paddingStart="20dp"
     android:paddingTop="12dp"
     android:paddingEnd="20dp"
-    android:paddingBottom="20dp">
+    android:paddingBottom="18dp">
 
     <View
-        android:layout_width="36dp"
+        android:layout_width="38dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:background="@android:color/darker_gray" />
+        android:background="@color/outline_variant" />
 
     <TextView
         android:id="@+id/tvBottomSheetTitle"
+        style="@style/TextAppearance.App.Section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:text="Company - Role"
-        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-        android:textColor="@color/on_background"
-        android:textStyle="bold" />
+        android:textSize="20sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:orientation="horizontal"
         android:weightSum="5">
 
@@ -46,12 +45,12 @@
 
             <TextView
                 android:id="@+id/stepSavedLabel"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Saved"
-                android:textColor="@color/on_surface"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
         </LinearLayout>
 
@@ -69,12 +68,12 @@
 
             <TextView
                 android:id="@+id/stepAppliedLabel"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Applied"
-                android:textColor="@color/on_surface"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
         </LinearLayout>
 
@@ -92,12 +91,12 @@
 
             <TextView
                 android:id="@+id/stepInterviewLabel"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Interview"
-                android:textColor="@color/on_surface"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
         </LinearLayout>
 
@@ -115,12 +114,12 @@
 
             <TextView
                 android:id="@+id/stepRejectedLabel"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Rejected"
-                android:textColor="@color/on_surface"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
         </LinearLayout>
 
@@ -138,12 +137,12 @@
 
             <TextView
                 android:id="@+id/stepAcceptedLabel"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Accepted"
-                android:textColor="@color/on_surface"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
         </LinearLayout>
 
@@ -151,111 +150,94 @@
 
     <TextView
         android:id="@+id/tvBottomSheetNotes"
+        style="@style/TextAppearance.App.Muted"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:text="Notes"
-        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-        android:textColor="@color/on_surface"
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/tvBottomSheetDate"
+        style="@style/TextAppearance.App.Muted"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Applied date"
-        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-        android:textColor="@color/on_surface_variant" />
+        android:layout_marginTop="6dp"
+        android:text="Applied date" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:orientation="horizontal"
         android:weightSum="5">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStatusSaved"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.App.Button.Outlined"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:minHeight="40dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:text="Saved"
-            android:textAllCaps="false"
             android:textSize="10sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStatusApplied"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.App.Button.Outlined"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:minHeight="40dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:text="Applied"
-            android:textAllCaps="false"
             android:textSize="10sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStatusInterview"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.App.Button.Outlined"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:minHeight="40dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:text="Interview"
-            android:textAllCaps="false"
             android:textSize="10sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStatusRejected"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.App.Button.Outlined"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:minHeight="40dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:text="Rejected"
-            android:textAllCaps="false"
             android:textSize="10sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStatusAccepted"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.App.Button.Outlined"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:minHeight="40dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:text="Accepted"
-            android:textAllCaps="false"
             android:textSize="10sp" />
 
     </LinearLayout>
@@ -265,7 +247,7 @@
         style="@style/Widget.App.Button.Outlined"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:text="Delete"
         android:textColor="@color/error"
         app:strokeColor="@color/error" />

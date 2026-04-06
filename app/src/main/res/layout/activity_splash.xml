@@ -16,15 +16,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.44">
+        app:layout_constraintVertical_bias="0.45">
 
         <TextView
             android:id="@+id/tvSplashTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="serif"
             android:text="OpportunityHub"
             android:textColor="@android:color/white"
-            android:textSize="32sp"
+            android:textSize="38sp"
             android:textStyle="bold" />
 
         <TextView
@@ -32,22 +33,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Your Career Companion"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
+            android:text="Career intelligence, simplified"
+            android:textColor="#E9F2EE"
+            android:textSize="14sp" />
+
     </LinearLayout>
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/splashProgress"
         style="@style/Widget.Material3.CircularProgressIndicator"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginBottom="40dp"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_marginBottom="42dp"
         app:indicatorColor="@android:color/white"
-        app:indicatorSize="40dp"
+        app:indicatorSize="38dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:trackColor="#40FFFFFF" />
+        app:trackColor="#33FFFFFF" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

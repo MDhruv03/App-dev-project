@@ -7,6 +7,7 @@
     <string name="tracker">Tracker</string>
     <string name="ai_interview">AI Interview</string>
     <string name="analytics">Analytics</string>
+    <string name="roadmap">Roadmap</string>
     
     <!-- Common -->
     <string name="profile">Profile</string>
@@ -15,6 +16,7 @@
     <string name="apply">Apply</string>
     <string name="save">Save</string>
     <string name="share">Share</string>
+    <string name="toggle_dark_mode">Toggle dark mode</string>
     
     <!-- Opportunity Types -->
     <string name="internship">Internship</string>

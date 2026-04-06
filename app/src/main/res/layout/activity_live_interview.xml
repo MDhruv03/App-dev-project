@@ -10,16 +10,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="20dp">
 
-        <!-- Camera + Top bar -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.CardView"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline"
-            app:strokeWidth="1dp">
+            android:layout_height="190dp">
 
             <androidx.camera.view.PreviewView
                 android:id="@+id/previewView"
@@ -28,22 +27,20 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Progress + Domain -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/tvLiveDomain"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Domain: SDE"
-                android:textColor="@color/on_surface_variant"
-                android:textSize="13sp" />
+                android:layout_weight="1"
+                android:text="Domain: SDE" />
 
             <TextView
                 android:id="@+id/tvLiveProgress"
@@ -51,35 +48,30 @@
                 android:layout_height="wrap_content"
                 android:text="Q1 of 6"
                 android:textColor="@color/primary"
-                android:textSize="13sp"
-                android:fontFamily="sans-serif-medium" />
+                android:textStyle="bold" />
+
         </LinearLayout>
 
-        <!-- AI Interviewer Avatar + Status (pulsing when speaking/thinking) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardInterviewer"
+            style="@style/Widget.App.CardView.Subtle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/primary_container"
-            app:strokeColor="@color/primary"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="10dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:padding="14dp">
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardInterviewerAvatar"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    app:cardCornerRadius="26dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     app:cardBackgroundColor="@color/primary"
+                    app:cardCornerRadius="25dp"
                     app:cardElevation="0dp">
 
                     <TextView
@@ -89,35 +81,34 @@
                         android:gravity="center"
                         android:text="A"
                         android:textColor="@color/on_primary"
-                        android:textSize="22sp"
-                        android:fontFamily="sans-serif-black" />
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
                 </com.google.android.material.card.MaterialCardView>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvInterviewer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Alex · AI Interviewer"
-                        android:textColor="@color/primary"
+                        android:textColor="@color/on_background"
                         android:textSize="15sp"
-                        android:fontFamily="sans-serif-medium" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvInterviewerStatus"
+                        style="@style/TextAppearance.App.Muted"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Getting ready..."
-                        android:textColor="@color/on_surface_variant"
-                        android:textSize="13sp" />
+                        android:text="Getting ready" />
 
                 </LinearLayout>
 
@@ -125,108 +116,89 @@
                     android:id="@+id/tvInterviewerFace"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🙂"
-                    android:textSize="24sp" />
+                    android:text=":)"
+                    android:textColor="@color/on_surface_variant"
+                    android:textSize="20sp" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Current Question -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.CardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardCornerRadius="14dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="10dp">
 
             <TextView
                 android:id="@+id/tvLiveQuestion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:padding="14dp"
                 android:text="Interview starting..."
                 android:textColor="@color/on_background"
-                android:textSize="17sp"
-                android:fontFamily="sans-serif-medium"
-                android:lineSpacingMultiplier="1.3" />
+                android:textSize="17sp" />
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Live Mic Status Indicator -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardMicStatus"
+            style="@style/Widget.App.CardView.Subtle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:visibility="gone"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/secondary_container">
+            android:layout_marginTop="10dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:padding="12dp">
 
                 <TextView
                     android:id="@+id/tvMicIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎙️"
-                    android:textSize="20sp" />
+                    android:text="Mic"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvMicStatus"
+                    style="@style/TextAppearance.App.Muted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="Listening... speak your answer"
-                    android:textColor="@color/secondary"
-                    android:textSize="14sp"
-                    android:fontFamily="sans-serif-medium" />
+                    android:text="Listening..." />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- User Transcript -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.CardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline_variant"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="10dp">
 
             <TextView
                 android:id="@+id/tvTranscript"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="14dp"
-                android:text="Your answer will appear here as you speak..."
-                android:textColor="@color/on_surface_variant"
-                android:textSize="14sp"
-                android:lineSpacingMultiplier="1.3" />
+                android:text="Your answer will appear here as you speak..." />
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- AI Feedback (shown after each answer) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardFeedback"
+            style="@style/Widget.App.CardView.Subtle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:visibility="gone"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/info_bg"
-            app:strokeWidth="0dp">
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/tvLiveFeedback"
@@ -235,68 +207,61 @@
                 android:padding="14dp"
                 android:text=""
                 android:textColor="@color/on_background"
-                android:textSize="14sp"
-                android:lineSpacingMultiplier="1.4" />
+                android:textSize="14sp" />
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Speaking Pace -->
         <TextView
             android:id="@+id/tvSpeakingPace"
+            style="@style/TextAppearance.App.Muted"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text=""
-            android:textColor="@color/on_surface_variant"
-            android:textSize="12sp" />
+            android:text="" />
 
-        <!-- Hidden metrics (kept for backward compat with Java) -->
         <TextView
             android:id="@+id/tvLiveMetrics"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:text="" />
+            android:text=""
+            android:visibility="gone" />
 
-        <!-- Manual controls (only Skip + End) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSpeakQuestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Replay"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStartListening"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Answer"
+            android:visibility="gone" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="16dp"
             android:gravity="end"
             android:orientation="horizontal">
-
-            <!-- Hidden legacy buttons kept for Java compat -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSpeakQuestion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:text="Replay" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStartListening"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:text="Answer" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnNextLiveQuestion"
                 style="@style/Widget.App.Button.Outlined"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:text="Skip →"
+                android:layout_height="wrap_content"
+                android:text="Skip"
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFinishLiveInterview"
                 style="@style/Widget.App.Button"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="10dp"
-                android:text="End Interview"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Finish"
                 android:visibility="gone" />
 
         </LinearLayout>

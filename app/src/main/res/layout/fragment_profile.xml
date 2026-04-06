@@ -4,21 +4,38 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    android:clipToPadding="false">
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="96dp">
+
+        <TextView
+            style="@style/TextAppearance.App.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profile" />
+
+        <TextView
+            style="@style/TextAppearance.App.Muted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Set your preferences for better recommendations" />
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.CardView.Subtle"
             android:layout_width="72dp"
             android:layout_height="72dp"
+            android:layout_marginTop="18dp"
             android:layout_gravity="center_horizontal"
-            app:cardBackgroundColor="@color/primary_container"
-            app:cardCornerRadius="36dp"
-            app:cardElevation="0dp">
+            app:cardCornerRadius="36dp">
 
             <TextView
                 android:layout_width="match_parent"
@@ -26,28 +43,23 @@
                 android:gravity="center"
                 android:text="UP"
                 android:textColor="@color/primary"
-                android:textSize="24sp"
+                android:textSize="26sp"
                 android:textStyle="bold" />
 
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            style="@style/TextAppearance.App.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="8dp"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="-0.02"
-            android:text="Personal Info"
-            android:textColor="@color/on_background"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="24dp"
+            android:text="Personal info" />
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.App.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:hint="Name">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -59,10 +71,10 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.App.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:hint="Email">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -74,22 +86,17 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
+            style="@style/TextAppearance.App.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="8dp"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="-0.02"
-            android:text="Preferences &amp; Goals"
-            android:textColor="@color/on_background"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="24dp"
+            android:text="Preferences and goals" />
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.App.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:hint="e.g. Java, Python, Android">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -101,10 +108,10 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.App.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:hint="e.g. SDE, Android Developer">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -116,10 +123,10 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.App.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:hint="Preferred location">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -134,7 +141,9 @@
             android:id="@+id/spinnerJobType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" />
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_toolbar_icon"
+            android:padding="10dp" />
 
         <CheckBox
             android:id="@+id/cbPaidPreference"
@@ -144,57 +153,46 @@
             android:text="Prefer paid opportunities" />
 
         <TextView
+            style="@style/TextAppearance.App.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="8dp"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="-0.02"
-            android:text="AI Resume Parsing"
-            android:textColor="@color/on_background"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="24dp"
+            android:text="Resume intelligence" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUploadResume"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.App.Button.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Upload PDF Resume"
-            android:textSize="15sp"
-            app:cornerRadius="12dp"
+            android:text="Upload PDF resume"
             app:icon="@android:drawable/ic_menu_upload"
             app:iconGravity="textStart"
-            app:strokeColor="@color/secondary" />
+            app:iconPadding="8dp" />
 
         <TextView
             android:id="@+id/tvResumeFileName"
+            style="@style/TextAppearance.App.Muted"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text=""
-            android:textColor="@color/on_surface" />
+            android:text="" />
 
         <TextView
             android:id="@+id/tvResumeSkills"
+            style="@style/TextAppearance.App.Muted"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Extracted skills will appear here"
-            android:textColor="@color/on_surface" />
+            android:hint="Extracted skills will appear here" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSaveProfile"
-            style="@style/Widget.MaterialComponents.Button"
+            style="@style/Widget.App.Button"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="36dp"
-            android:layout_marginBottom="32dp"
-            android:text="Save Profile"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium"
-            app:cornerRadius="14dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Save profile" />
 
     </LinearLayout>
 

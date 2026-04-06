@@ -4,8 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="1dp">
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/outline"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +17,7 @@
 
         <View
             android:id="@+id/viewPriorityBar"
-            android:layout_width="6dp"
+            android:layout_width="4dp"
             android:layout_height="match_parent"
             android:background="@android:color/holo_red_dark" />
 
@@ -29,17 +32,16 @@
                 android:id="@+id/tvRoadmapTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="@color/on_background"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvRoadmapDescription"
+                style="@style/TextAppearance.App.Muted"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="13sp" />
+                android:layout_marginTop="4dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -49,18 +51,19 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipEstimatedDays"
-                    style="@style/Widget.Material3.Chip.Assist"
+                    style="@style/Widget.App.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="~7 days" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipCategory"
-                    style="@style/Widget.Material3.Chip.Assist"
+                    style="@style/Widget.App.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Skill Gap" />
+                    android:text="Skill Gap"
+                    app:chipBackgroundColor="@color/secondary_container" />
 
             </LinearLayout>
 
@@ -73,11 +76,14 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnOpenResource"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.App.Button.Outlined"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Watch/Read 🔗"
-                    android:textAllCaps="false" />
+                    android:minWidth="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="Open resource"
+                    android:textSize="12sp" />
 
                 <CheckBox
                     android:id="@+id/cbCompleted"

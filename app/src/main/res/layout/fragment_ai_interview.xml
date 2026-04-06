@@ -3,35 +3,48 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background">
+    android:background="@color/background"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="96dp">
 
-        <!-- Readiness Score Card -->
-        <com.google.android.material.card.MaterialCardView
+        <TextView
+            style="@style/TextAppearance.App.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/primary_container">
+            android:text="Interview studio" />
+
+        <TextView
+            style="@style/TextAppearance.App.Muted"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Practice, benchmark, then go live" />
+
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.CardView.Subtle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="18dp">
 
                 <TextView
+                    style="@style/TextAppearance.App.Muted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Interview Readiness Score"
-                    android:textColor="@color/primary"
-                    android:textSize="16sp"
                     android:layout_gravity="center_horizontal" />
 
                 <TextView
@@ -41,78 +54,80 @@
                     android:layout_marginTop="8dp"
                     android:text="0%"
                     android:textColor="@color/primary"
-                    android:textSize="48sp"
+                    android:textSize="46sp"
                     android:textStyle="bold"
+                    android:fontFamily="serif"
                     android:layout_gravity="center_horizontal" />
-                    
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="16dp">
-                    
+                    android:layout_marginTop="16dp"
+                    android:weightSum="2">
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center">
-                        
+
                         <TextView
                             android:id="@+id/tv_total_attempts"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textColor="@color/primary"
-                            android:textSize="24sp"
+                            android:textColor="@color/on_background"
+                            android:textSize="22sp"
                             android:textStyle="bold" />
-                            
+
                         <TextView
+                            style="@style/TextAppearance.App.Muted"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Attempts"
-                            android:textColor="@color/primary"
-                            android:textSize="12sp" />
+                            android:layout_marginTop="2dp"
+                            android:text="Attempts" />
+
                     </LinearLayout>
-                    
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center">
-                        
+
                         <TextView
                             android:id="@+id/tv_average_score"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0.0"
-                            android:textColor="@color/primary"
-                            android:textSize="24sp"
+                            android:textColor="@color/on_background"
+                            android:textSize="22sp"
                             android:textStyle="bold" />
-                            
+
                         <TextView
+                            style="@style/TextAppearance.App.Muted"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Avg Score"
-                            android:textColor="@color/primary"
-                            android:textSize="12sp" />
+                            android:layout_marginTop="2dp"
+                            android:text="Avg score" />
+
                     </LinearLayout>
+
                 </LinearLayout>
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Domain Selection -->
         <TextView
+            style="@style/TextAppearance.App.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
             android:text="@string/select_domain"
-            android:textColor="@color/on_background"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="4dp" />
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/domain_chip_group"
@@ -123,35 +138,35 @@
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_sde"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.App.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="SDE" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_ml"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.App.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ML" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_web"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.App.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Web" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_android"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.App.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Android" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_hr"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.App.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="HR" />
@@ -164,16 +179,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="Take Skill Quiz 🧠" />
+            android:text="Take skill quiz" />
 
-        <!-- Start Interview Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_start_interview"
             style="@style/Widget.App.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:paddingVertical="14dp"
+            android:layout_marginTop="10dp"
             android:text="@string/start_interview" />
 
         <com.google.android.material.button.MaterialButton
@@ -182,17 +195,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Start Real AI Company Interview" />
+            android:text="Start live AI interview" />
 
-        <!-- Practice Topics -->
         <TextView
+            style="@style/TextAppearance.App.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:fontFamily="sans-serif-medium"
             android:text="Practice Topics"
-            android:textColor="@color/on_background"
-            android:textSize="18sp"
             android:textStyle="bold" />
 
         <androidx.recyclerview.widget.RecyclerView
