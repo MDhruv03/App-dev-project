@@ -206,6 +206,7 @@ type AppStateValue = {
     audioBase64?: string;
     transcript?: string;
   }) => Promise<SubmitResult>;
+  endInterviewEarly: () => void;
   resetInterview: () => void;
 };
 
@@ -1631,8 +1632,6 @@ export function AppStateProvider({
         transcript: payload.transcript,
       });
 
-      const usedLocalFallback = evaluation.feedback.toLowerCase().includes("fallback");
-
       let completed = false;
 
       setInterview((prev) => {
@@ -1665,7 +1664,7 @@ export function AppStateProvider({
         if (!isLast) {
           nextQuestions[nextIndex] = buildAdaptiveFollowUpQuestion({
             previousQuestion: question,
-            transcript: payload.transcript?.trim() ?? "",
+            transcript: evaluation.transcript?.trim() || payload.transcript?.trim() || "",
             evaluation,
             domain: prev.config.domain,
             difficulty: prev.config.difficulty,
@@ -1687,11 +1686,7 @@ export function AppStateProvider({
       });
 
       pushActivity("interview", `Interview answer evaluated: ${evaluation.score}/100.`);
-      setLastError(
-        usedLocalFallback
-          ? "AI model is currently unreachable. Local evaluator fallback is active."
-          : null
-      );
+      setLastError(null);
 
       return {
         score: evaluation.score,
@@ -1701,8 +1696,10 @@ export function AppStateProvider({
         strengths: evaluation.strengths,
         improvements: evaluation.improvements,
       };
-    } catch {
-      const message = "Could not evaluate this answer. Please retry.";
+    } catch (error) {
+      const message = error instanceof Error && error.message
+        ? error.message
+        : "Could not evaluate this answer. Please retry.";
       setLastError(message);
       return {
         score: 0,
@@ -1719,6 +1716,31 @@ export function AppStateProvider({
 
   const resetInterview = () => {
     setInterview(emptyInterviewSession);
+  };
+
+  const endInterviewEarly = () => {
+    let ended = false;
+
+    setInterview((prev) => {
+      if (!prev.active) {
+        return prev;
+      }
+
+      ended = true;
+      const allAnswered = prev.questions.length > 0 && prev.answers.length >= prev.questions.length;
+
+      return {
+        ...prev,
+        active: false,
+        completed: allAnswered,
+        endedAt: Date.now(),
+      };
+    });
+
+    if (ended) {
+      pushActivity("interview", "Interview ended early by candidate.");
+      setLastError(null);
+    }
   };
 
   const value: AppStateValue = {
@@ -1759,6 +1781,7 @@ export function AppStateProvider({
     setInterviewSchedule,
     startInterview,
     submitInterviewAnswer,
+    endInterviewEarly,
     resetInterview,
   };
 

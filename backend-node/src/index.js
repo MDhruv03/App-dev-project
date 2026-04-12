@@ -12,7 +12,7 @@ import {
 import { SqliteStore } from "./lib/sqliteStore.js";
 import { personalizeAndRankOpportunities } from "./lib/recommendation.js";
 import { syncCodingProfiles } from "./lib/codingSync.js";
-import { evaluateInterviewAnswer } from "./lib/interviewEval.js";
+import { evaluateInterviewAnswer, generateInterviewReaction } from "./lib/interviewEval.js";
 import { computeAnalytics, computeReadiness, computeRoadmapTasks } from "./lib/analytics.js";
 
 const app = express();
@@ -299,6 +299,22 @@ app.post("/interview/evaluate", async (req, res) => {
   saveUserState(req, state);
 
   res.json(evaluation);
+});
+
+app.post("/interview/react", async (req, res) => {
+  const payload = {
+    domain: String(req.body?.domain || "SDE"),
+    topic: String(req.body?.topic || "Domain"),
+    score: Number(req.body?.score || 0),
+    candidateName: String(req.body?.candidateName || "")
+  };
+
+  const reaction = await generateInterviewReaction(payload, {
+    groqApiKey: config.groqApiKey,
+    groqModel: config.groqModel
+  });
+
+  res.json(reaction);
 });
 
 app.get("/profile", (req, res) => {

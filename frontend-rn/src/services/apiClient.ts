@@ -49,6 +49,10 @@ function getTunnelHeaders(baseUrl: string): Record<string, string> {
   return {};
 }
 
+function isExpDirectBase(baseUrl: string): boolean {
+  return baseUrl.toLowerCase().includes(".exp.direct");
+}
+
 function buildUrl(baseUrl: string, path: string): string {
   const normalizedBase = normalizeBaseUrl(baseUrl);
   if (!normalizedBase) {
@@ -135,8 +139,15 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
         : await response.text();
 
       if (!response.ok) {
+        const staleExpDirectTunnel =
+          response.status === 404 &&
+          isExpDirectBase(base) &&
+          isLikelyTunnelError(response.status, payload);
+
         const message =
-          typeof payload === "object" && payload && "message" in payload
+          staleExpDirectTunnel
+            ? "Backend tunnel is not active. Run npm run api:prepare-ngrok in frontend-rn, then restart Expo."
+            : typeof payload === "object" && payload && "message" in payload
             ? String((payload as { message: unknown }).message)
             : `Request failed with status ${response.status}`;
 

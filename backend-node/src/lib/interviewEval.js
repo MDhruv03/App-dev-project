@@ -216,6 +216,84 @@ function extractJsonObject(content) {
   return text;
 }
 
+function sanitizeShortPhrase(value) {
+  const compact = String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+
+  if (!compact) {
+    return "";
+  }
+
+  if (compact.length <= 120) {
+    return compact;
+  }
+
+  return `${compact.slice(0, 117).trim()}...`;
+}
+
+function buildFallbackReaction(input) {
+  const score = clamp(Math.round(Number(input.score || 0)), 0, 100);
+  const topic = String(input.topic || "your answer").trim().toLowerCase();
+  const topicLabel = topic ? topic : "your answer";
+
+  if (score >= 85) {
+    return `Strong answer on ${topicLabel}. Let us raise the bar for the next one.`;
+  }
+
+  if (score >= 70) {
+    return `Good momentum on ${topicLabel}. Push one level deeper on this next question.`;
+  }
+
+  if (score >= 55) {
+    return `Solid foundation on ${topicLabel}. Tighten structure and sharpen your next answer.`;
+  }
+
+  return "Reset and focus on clarity. Let us rebuild this next answer with stronger structure.";
+}
+
+async function reactWithGroq(input, apiKey, model) {
+  const systemPrompt = [
+    "You are an interviewer speaking to a candidate between questions.",
+    "Reply with one supportive transition line only.",
+    "No markdown, no JSON, no lists, and no quotation marks.",
+    "Keep it under 18 words.",
+  ].join(" ");
+
+  const userPrompt = {
+    domain: String(input.domain || "SDE"),
+    topic: String(input.topic || "Domain"),
+    score: clamp(Math.round(Number(input.score || 0)), 0, 100),
+    candidateName: String(input.candidateName || "").trim(),
+  };
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.7,
+      max_tokens: 42,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: JSON.stringify(userPrompt) },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq HTTP ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const content = payload?.choices?.[0]?.message?.content;
+  return sanitizeShortPhrase(content);
+}
+
 async function evaluateWithGroq(input, apiKey, model) {
   const systemPrompt = [
     "You are a strict technical interview evaluator.",
@@ -289,7 +367,11 @@ export async function evaluateInterviewAnswer(input, options) {
   let transcript = String(input.transcript || "").trim();
   let transcriptNote = "";
 
-  if (!transcript && options?.groqApiKey && normalizeBase64Audio(input.audioBase64)) {
+  if (!options?.groqApiKey) {
+    throw new Error("GROQ_API_KEY is missing. AI interview evaluation is unavailable.");
+  }
+
+  if (!transcript && normalizeBase64Audio(input.audioBase64)) {
     try {
       transcript = await transcribeAudioWithGroq(input, options.groqApiKey);
       if (transcript) {
@@ -307,36 +389,41 @@ export async function evaluateInterviewAnswer(input, options) {
     transcript
   };
 
-  const local = buildLocalEvaluation(effectiveInput);
-  if (transcriptNote) {
-    local.feedback = `${local.feedback} (${transcriptNote})`;
-  }
-
-  if (!options?.groqApiKey) {
-    return local;
-  }
-
   try {
     const ai = await evaluateWithGroq(effectiveInput, options.groqApiKey, options.groqModel || "llama-3.1-8b-instant");
+
     if (!ai.strengths.length) {
-      ai.strengths = local.strengths;
+      ai.strengths = ["Keep ownership explicit and mention one measurable impact."];
     }
     if (!ai.improvements.length) {
-      ai.improvements = local.improvements;
+      ai.improvements = ["Add one concrete trade-off and one metric in your response."];
     }
     if (!ai.feedback) {
-      ai.feedback = local.feedback;
+      ai.feedback = "Interview evaluated.";
     }
+
     ai.transcript = transcript;
     if (transcriptNote) {
       ai.feedback = `${ai.feedback} (${transcriptNote})`;
     }
     return ai;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "AI interview evaluation failed.";
+    throw new Error(message);
+  }
+}
+
+export async function generateInterviewReaction(input, options) {
+  const fallback = buildFallbackReaction(input);
+
+  if (!options?.groqApiKey) {
+    return { phrase: fallback };
+  }
+
+  try {
+    const phrase = await reactWithGroq(input, options.groqApiKey, options.groqModel || "llama-3.1-8b-instant");
+    return { phrase: phrase || fallback };
   } catch {
-    return {
-      ...local,
-      feedback: `${local.feedback} (Local evaluator fallback used.)`,
-      transcript
-    };
+    return { phrase: fallback };
   }
 }

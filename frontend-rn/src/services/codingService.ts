@@ -1,5 +1,5 @@
 import { USE_MOCK_SERVICES, hasApiBaseUrl } from "../config/env";
-import { apiRequest } from "./apiClient";
+import { apiRequest } from "../services/apiClient";
 
 export type CodingSyncInput = {
   leetCodeHandle: string;
