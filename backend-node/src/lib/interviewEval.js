@@ -2,6 +2,71 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function normalizeBase64Audio(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  return raw.replace(/^data:[^;]+;base64,/i, "").replace(/\s+/g, "");
+}
+
+function inferAudioMeta(audioUri) {
+  const normalized = String(audioUri || "").toLowerCase();
+  if (normalized.endsWith(".wav")) {
+    return { extension: "wav", mimeType: "audio/wav" };
+  }
+  if (normalized.endsWith(".mp3")) {
+    return { extension: "mp3", mimeType: "audio/mpeg" };
+  }
+  if (normalized.endsWith(".webm")) {
+    return { extension: "webm", mimeType: "audio/webm" };
+  }
+  if (normalized.endsWith(".aac")) {
+    return { extension: "aac", mimeType: "audio/aac" };
+  }
+  return { extension: "m4a", mimeType: "audio/mp4" };
+}
+
+async function transcribeAudioWithGroq(input, apiKey) {
+  const normalizedBase64 = normalizeBase64Audio(input.audioBase64);
+  if (!normalizedBase64) {
+    return "";
+  }
+
+  const audioBuffer = Buffer.from(normalizedBase64, "base64");
+  if (!audioBuffer || audioBuffer.length === 0) {
+    return "";
+  }
+
+  const audioMeta = inferAudioMeta(input.audioUri);
+
+  const formData = new FormData();
+  formData.append("model", "whisper-large-v3-turbo");
+  formData.append("response_format", "verbose_json");
+  formData.append("temperature", "0");
+  formData.append(
+    "file",
+    new Blob([audioBuffer], { type: audioMeta.mimeType }),
+    `answer.${audioMeta.extension}`
+  );
+
+  const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`transcription HTTP ${response.status}${detail ? `: ${detail.slice(0, 120)}` : ""}`);
+  }
+
+  const payload = await response.json();
+  return String(payload?.text || "").trim();
+}
+
 function tokenize(text) {
   return String(text || "")
     .toLowerCase()
@@ -136,7 +201,8 @@ function buildLocalEvaluation(input) {
     feedback,
     rubric,
     strengths: strengths.slice(0, 3),
-    improvements: improvements.slice(0, 4)
+    improvements: improvements.slice(0, 4),
+    transcript: transcript.trim()
   };
 }
 
@@ -168,7 +234,8 @@ async function evaluateWithGroq(input, apiKey, model) {
     prompt: input.prompt,
     durationSec: input.durationSec,
     transcript: String(input.transcript || "").trim(),
-    audioUri: input.audioUri
+    audioUri: input.audioUri,
+    audioProvided: Boolean(input.audioBase64)
   };
 
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -213,19 +280,44 @@ async function evaluateWithGroq(input, apiKey, model) {
       : [],
     improvements: Array.isArray(parsed.improvements)
       ? parsed.improvements.map((item) => String(item)).filter(Boolean).slice(0, 4)
-      : []
+      : [],
+    transcript: String(input.transcript || "").trim()
   };
 }
 
 export async function evaluateInterviewAnswer(input, options) {
-  const local = buildLocalEvaluation(input);
+  let transcript = String(input.transcript || "").trim();
+  let transcriptNote = "";
+
+  if (!transcript && options?.groqApiKey && normalizeBase64Audio(input.audioBase64)) {
+    try {
+      transcript = await transcribeAudioWithGroq(input, options.groqApiKey);
+      if (transcript) {
+        transcriptNote = "Auto-transcribed from your recording.";
+      }
+    } catch (error) {
+      transcriptNote = error instanceof Error
+        ? `Audio transcription unavailable (${error.message}).`
+        : "Audio transcription unavailable.";
+    }
+  }
+
+  const effectiveInput = {
+    ...input,
+    transcript
+  };
+
+  const local = buildLocalEvaluation(effectiveInput);
+  if (transcriptNote) {
+    local.feedback = `${local.feedback} (${transcriptNote})`;
+  }
 
   if (!options?.groqApiKey) {
     return local;
   }
 
   try {
-    const ai = await evaluateWithGroq(input, options.groqApiKey, options.groqModel || "llama-3.1-8b-instant");
+    const ai = await evaluateWithGroq(effectiveInput, options.groqApiKey, options.groqModel || "llama-3.1-8b-instant");
     if (!ai.strengths.length) {
       ai.strengths = local.strengths;
     }
@@ -235,11 +327,16 @@ export async function evaluateInterviewAnswer(input, options) {
     if (!ai.feedback) {
       ai.feedback = local.feedback;
     }
+    ai.transcript = transcript;
+    if (transcriptNote) {
+      ai.feedback = `${ai.feedback} (${transcriptNote})`;
+    }
     return ai;
   } catch {
     return {
       ...local,
-      feedback: `${local.feedback} (Local evaluator fallback used.)`
+      feedback: `${local.feedback} (Local evaluator fallback used.)`,
+      transcript
     };
   }
 }

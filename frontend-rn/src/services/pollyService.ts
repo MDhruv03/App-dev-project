@@ -26,6 +26,15 @@ export type PollyPlaybackAsset = {
 };
 
 const BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const BASE64_LOOKUP = new Int16Array(256).fill(-1);
+
+for (let index = 0; index < BASE64_ALPHABET.length; index += 1) {
+  BASE64_LOOKUP[BASE64_ALPHABET.charCodeAt(index)] = index;
+}
+
+function toSafeTrimmedString(value: unknown): string {
+  return String(value ?? "").trim();
+}
 
 function removeWhitespace(value: string): string {
   return value.replace(/\s+/g, "").trim();
@@ -66,6 +75,68 @@ function bytesToBase64(bytes: Uint8Array): string {
   return result;
 }
 
+function base64ToBytes(input: string): Uint8Array {
+  const normalized = removeWhitespace(input).replace(/-/g, "+").replace(/_/g, "/");
+
+  if (!normalized) {
+    return new Uint8Array(0);
+  }
+
+  if (normalized.length % 4 === 1) {
+    throw new Error("Invalid base64 length.");
+  }
+
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const padding = padded.endsWith("==") ? 2 : padded.endsWith("=") ? 1 : 0;
+  const outputLength = (padded.length / 4) * 3 - padding;
+  const output = new Uint8Array(outputLength);
+
+  let outputIndex = 0;
+
+  for (let index = 0; index < padded.length; index += 4) {
+    const c1 = padded.charCodeAt(index);
+    const c2 = padded.charCodeAt(index + 1);
+    const c3 = padded.charCodeAt(index + 2);
+    const c4 = padded.charCodeAt(index + 3);
+
+    const v1 = BASE64_LOOKUP[c1];
+    const v2 = BASE64_LOOKUP[c2];
+    const v3 = c3 === 61 ? 0 : BASE64_LOOKUP[c3];
+    const v4 = c4 === 61 ? 0 : BASE64_LOOKUP[c4];
+
+    if (v1 < 0 || v2 < 0 || (c3 !== 61 && v3 < 0) || (c4 !== 61 && v4 < 0)) {
+      throw new Error("Invalid base64 characters.");
+    }
+
+    const chunk = (v1 << 18) | (v2 << 12) | (v3 << 6) | v4;
+
+    if (outputIndex < outputLength) {
+      output[outputIndex] = (chunk >> 16) & 0xff;
+      outputIndex += 1;
+    }
+
+    if (c3 !== 61 && outputIndex < outputLength) {
+      output[outputIndex] = (chunk >> 8) & 0xff;
+      outputIndex += 1;
+    }
+
+    if (c4 !== 61 && outputIndex < outputLength) {
+      output[outputIndex] = chunk & 0xff;
+      outputIndex += 1;
+    }
+  }
+
+  return output;
+}
+
+function binaryTextToBytes(value: string): Uint8Array<ArrayBuffer> {
+  const bytes = new Uint8Array(new ArrayBuffer(value.length));
+  for (let index = 0; index < value.length; index += 1) {
+    bytes[index] = value.charCodeAt(index) & 0xff;
+  }
+  return bytes;
+}
+
 function alternateProxyUrl(url: string): string | null {
   if (url.endsWith("/polly")) {
     return `${url.slice(0, -"/polly".length)}/polly-proxy`;
@@ -77,9 +148,9 @@ function alternateProxyUrl(url: string): string | null {
 }
 
 function buildAttempts(): PollyAttempt[] {
-  const normalizedUrl = POLLY_PROXY_URL.trim();
-  const preferredVoice = POLLY_VOICE_ID.trim() || "Gregory";
-  const preferredEngine = POLLY_ENGINE.trim() || "neural";
+  const normalizedUrl = toSafeTrimmedString(POLLY_PROXY_URL);
+  const preferredVoice = toSafeTrimmedString(POLLY_VOICE_ID) || "Gregory";
+  const preferredEngine = toSafeTrimmedString(POLLY_ENGINE) || "neural";
 
   const urls = [normalizedUrl];
   const alternate = alternateProxyUrl(normalizedUrl);
@@ -163,22 +234,47 @@ async function parsePayloadFromJson(raw: string): Promise<PollyPayload | null> {
 
 async function decodePollyResponse(response: Response): Promise<PollyPayload> {
   const contentType = response.headers.get("content-type") ?? "";
-  const textBody = await response.clone().text().catch(() => "");
+  const isAudioContent = contentType.toLowerCase().includes("audio");
 
-  const jsonPayload = await parsePayloadFromJson(textBody);
-  if (jsonPayload && jsonPayload.base64Audio) {
-    return jsonPayload;
+  let textBody = "";
+  if (!isAudioContent) {
+    if (typeof response.clone === "function") {
+      textBody = await response.clone().text().catch(() => "");
+    } else if (typeof response.text === "function") {
+      textBody = await response.text().catch(() => "");
+    }
+
+    if (textBody) {
+      const jsonPayload = await parsePayloadFromJson(textBody);
+      if (jsonPayload && jsonPayload.base64Audio) {
+        return jsonPayload;
+      }
+
+      const normalizedText = normalizeBase64(textBody);
+      if (isLikelyBase64(normalizedText)) {
+        return {
+          base64Audio: normalizedText,
+          contentType: contentType || "audio/mpeg",
+        };
+      }
+    }
   }
 
-  const normalizedText = normalizeBase64(textBody);
-  if (isLikelyBase64(normalizedText)) {
-    return {
-      base64Audio: normalizedText,
-      contentType: contentType || "audio/mpeg",
-    };
+  let bytes = new Uint8Array();
+  if (typeof response.arrayBuffer === "function") {
+    bytes = new Uint8Array(await response.arrayBuffer());
+  } else if (typeof response.blob === "function") {
+    const blob = await response.blob();
+    if (blob && typeof blob.arrayBuffer === "function") {
+      bytes = new Uint8Array(await blob.arrayBuffer());
+    }
+  } else if (typeof response.text === "function") {
+    const binaryText = await response.text().catch(() => "");
+    if (binaryText) {
+      bytes = binaryTextToBytes(binaryText);
+    }
   }
 
-  const bytes = new Uint8Array(await response.arrayBuffer());
   if (bytes.length === 0) {
     throw new Error("Polly returned empty audio.");
   }
@@ -246,9 +342,14 @@ async function persistAudio(base64Audio: string): Promise<{ fileUri: string; cle
     throw new Error("Polly audio payload is not valid base64.");
   }
 
+  const audioBytes = base64ToBytes(normalized);
+  if (audioBytes.length === 0) {
+    throw new Error("Polly audio payload decoded to empty bytes.");
+  }
+
   const file = new File(Paths.cache, `polly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`);
   file.create();
-  file.write(normalized, { encoding: "base64" });
+  file.write(audioBytes);
 
   return {
     fileUri: file.uri,
@@ -269,7 +370,7 @@ export function getPollyDisabledReason(): string | null {
     return "EXPO_PUBLIC_POLLY_ENABLED is false";
   }
 
-  const proxyUrl = POLLY_PROXY_URL.trim();
+  const proxyUrl = toSafeTrimmedString(POLLY_PROXY_URL);
   if (!proxyUrl) {
     return "EXPO_PUBLIC_POLLY_PROXY_URL is missing";
   }
@@ -296,7 +397,7 @@ export async function synthesizePollySpeech(text: string): Promise<PollyPlayback
     throw new Error(reason);
   }
 
-  const spokenText = text.trim();
+  const spokenText = toSafeTrimmedString(text);
   if (!spokenText) {
     throw new Error("No text provided for interviewer voice.");
   }

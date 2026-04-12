@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
 import { Audio } from "expo-av";
+import { File } from "expo-file-system";
 import * as Speech from "expo-speech";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { GlassCard } from "../components/GlassCard";
@@ -42,15 +44,23 @@ type OptionalFaceDetectorModule = {
   FaceDetectorClassifications?: { all?: number };
 };
 
-function loadOptionalFaceDetector(): OptionalFaceDetectorModule | null {
+async function loadOptionalFaceDetector(): Promise<OptionalFaceDetectorModule | null> {
+  if (Platform.OS === "web") {
+    return null;
+  }
+
   try {
-    const mod = require("expo-face-detector") as OptionalFaceDetectorModule;
-    if (mod && typeof mod.detectFacesAsync === "function") {
-      return mod;
+    const module = (await import("expo-face-detector")) as unknown as {
+      default?: OptionalFaceDetectorModule;
+    } & OptionalFaceDetectorModule;
+    const candidate = module.default ?? module;
+    if (candidate && typeof candidate.detectFacesAsync === "function") {
+      return candidate;
     }
   } catch {
-    // Expo Go may not include this native module; fallback path is handled in UI.
+    // Optional module unavailable on this runtime.
   }
+
   return null;
 }
 
@@ -64,15 +74,91 @@ function formatSeconds(seconds: number) {
   return `${mins}:${secs}`;
 }
 
+function clampNumber(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
 function targetDurationForDifficulty(difficulty: InterviewDifficulty): number {
   if (difficulty === "Easy") return 45;
   if (difficulty === "Hard") return 95;
   return 70;
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function normalizeSpeechText(value: string): string {
+  return value
+    .replace(/\bSDE\b/g, "software development engineer")
+    .replace(/\bDSA\b/g, "data structures and algorithms")
+    .replace(/\bSQL\b/g, "sequel")
+    .replace(/\bML\b/g, "machine learning")
+    .replace(/\bAPI\b/g, "A P I")
+    .replace(/\bCI\/CD\b/g, "C I C D")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stripSsml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stableHash(value: string): number {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function buildInterviewerSpeech(params: {
+  question: string;
+  isFirstQuestion: boolean;
+  candidateName: string;
+}) {
+  const normalizedQuestion = normalizeSpeechText(params.question);
+  const transitions = [
+    "Let us walk through this carefully.",
+    "Take a breath, and think out loud.",
+    "I like your momentum, now go deeper.",
+    "Great, let us challenge your reasoning a bit.",
+  ];
+  const closers = [
+    "Anchor your answer with one concrete example.",
+    "Name one trade-off before you conclude.",
+    "Keep your structure clear: context, action, and result.",
+    "Use measurable impact where possible.",
+  ];
+
+  const seed = stableHash(normalizedQuestion);
+  const transition = transitions[seed % transitions.length];
+  const closer = closers[seed % closers.length];
+  const intro = params.isFirstQuestion
+    ? params.candidateName
+      ? `Hi ${params.candidateName}, welcome in. We will keep this conversational and practical.`
+      : "Hi, welcome in. We will keep this conversational and practical."
+    : transition;
+
+  const plain = `${intro} ${normalizedQuestion} ${closer}`.replace(/\s+/g, " ").trim();
+  const ssml = `<speak><prosody rate="90%" pitch="+2%">${escapeXml(intro)}<break time="350ms"/>${escapeXml(normalizedQuestion)}<break time="420ms"/>${escapeXml(closer)}</prosody></speak>`;
+
+  return { plain, ssml };
+}
+
 export function InterviewScreen() {
   const { theme } = useAppTheme();
+  const isFocused = useIsFocused();
   const {
+    profile,
     coding,
     interview,
     startInterview,
@@ -97,29 +183,79 @@ export function InterviewScreen() {
   const [latestStrengths, setLatestStrengths] = useState<string[]>([]);
   const [latestImprovements, setLatestImprovements] = useState<string[]>([]);
   const [showSetupCard, setShowSetupCard] = useState(true);
+  const [showHints, setShowHints] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState("Interviewer voice is idle.");
   const [isSpeakingQuestion, setIsSpeakingQuestion] = useState(false);
-  const [framingStatus, setFramingStatus] = useState("Run a check to verify face + eyes detection.");
+  const [framingStatus, setFramingStatus] = useState("Grant camera permission and run a framing check.");
   const [isCheckingFraming, setIsCheckingFraming] = useState(false);
+  const [hasAdvancedFaceDetection, setHasAdvancedFaceDetection] = useState<boolean | null>(null);
+  const [eyeContactScore, setEyeContactScore] = useState(0);
+  const [eyeTrackingSamples, setEyeTrackingSamples] = useState(0);
 
   const [selectedDomain, setSelectedDomain] = useState<InterviewDomain>("SDE");
   const [selectedDifficulty, setSelectedDifficulty] = useState<InterviewDifficulty>("Medium");
   const [selectedQuestionCount, setSelectedQuestionCount] = useState(5);
   const [selectedFocusTopic, setSelectedFocusTopic] = useState<InterviewTopic | "Mixed">("Mixed");
 
-  const optionalFaceDetector = useMemo(() => loadOptionalFaceDetector(), []);
-  const hasAdvancedFaceDetection = Boolean(optionalFaceDetector);
-
   const cameraRef = useRef<CameraView | null>(null);
   const interviewerSoundRef = useRef<Audio.Sound | null>(null);
   const interviewerCleanupRef = useRef<null | (() => Promise<void>)>(null);
+  const optionalFaceDetectorRef = useRef<OptionalFaceDetectorModule | "unavailable" | null>(null);
+  const hasGreetedRef = useRef(false);
   const spokenQuestionIdRef = useRef("");
   const framingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const getOptionalFaceDetector = async (): Promise<OptionalFaceDetectorModule | null> => {
+    if (optionalFaceDetectorRef.current === "unavailable") {
+      return null;
+    }
+
+    if (optionalFaceDetectorRef.current) {
+      return optionalFaceDetectorRef.current;
+    }
+
+    const detector = await loadOptionalFaceDetector();
+    if (detector) {
+      optionalFaceDetectorRef.current = detector;
+      setHasAdvancedFaceDetection(true);
+      return detector;
+    }
+
+    optionalFaceDetectorRef.current = "unavailable";
+    setHasAdvancedFaceDetection(false);
+    return null;
+  };
+
   const currentQuestion = interview.questions[interview.currentIndex];
   const currentHints = currentQuestion?.hints ?? [];
   const canUseCamera = cameraPermission?.granted === true;
   const targetDurationSec = targetDurationForDifficulty(selectedDifficulty);
+  const isLiveInterview = interview.active && !interview.completed;
+
+  const eyeContactHint = useMemo(() => {
+    if (!canUseCamera) {
+      return "Camera permission is required for eye-contact tracking.";
+    }
+
+    if (hasAdvancedFaceDetection === false) {
+      return "Strict eye tracking needs a development build. Preview framing remains active.";
+    }
+
+    if (hasAdvancedFaceDetection === null || eyeTrackingSamples === 0) {
+      return "Running initial eye-contact baseline...";
+    }
+
+    if (eyeContactScore >= 80) {
+      return "Eye contact looks strong and stable.";
+    }
+
+    if (eyeContactScore >= 60) {
+      return "Good base. Keep your gaze near the camera lens.";
+    }
+
+    return "Look at the camera lens more consistently for better presence.";
+  }, [canUseCamera, eyeContactScore, eyeTrackingSamples, hasAdvancedFaceDetection]);
 
   const averageScore = useMemo(() => {
     if (interview.answers.length === 0) return 0;
@@ -175,9 +311,11 @@ export function InterviewScreen() {
     }
   };
 
-  const speakQuestionAloud = async (text: string) => {
-    const prompt = text.trim();
-    if (!prompt) {
+  const speakQuestionAloud = async (spokenText?: string, fallbackText?: string) => {
+    const prompt = String(spokenText ?? "").trim();
+    const plainFallback = String(fallbackText ?? stripSsml(prompt)).trim();
+
+    if (!prompt || !plainFallback) {
       return;
     }
 
@@ -186,15 +324,17 @@ export function InterviewScreen() {
       setVoiceStatus("Interviewer is speaking...");
 
       await releaseInterviewerAudio();
+      await resetAudioMode();
       const audioAsset = await synthesizePollySpeech(prompt);
       interviewerCleanupRef.current = audioAsset.cleanup;
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioAsset.fileUri },
-        { shouldPlay: true, volume: 1.0 }
+        { shouldPlay: false, volume: 1.0 }
       );
 
       interviewerSoundRef.current = sound;
+      await sound.playAsync();
       sound.setOnPlaybackStatusUpdate((playback) => {
         if (!playback.isLoaded) {
           return;
@@ -209,12 +349,13 @@ export function InterviewScreen() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Voice playback failed";
       try {
+        await resetAudioMode();
         setVoiceStatus(`Polly unavailable (${message}). Using device voice.`);
         setIsSpeakingQuestion(true);
-        Speech.speak(prompt, {
+        Speech.speak(plainFallback, {
           language: "en-US",
-          rate: 0.95,
-          pitch: 1.0,
+          rate: 0.9,
+          pitch: 1.02,
           onDone: () => {
             setIsSpeakingQuestion(false);
             setVoiceStatus("Question played using device voice.");
@@ -237,33 +378,51 @@ export function InterviewScreen() {
 
   const runFramingCheck = async () => {
     if (!canUseCamera) {
-      setFramingStatus("Camera permission is required for face + eyes detection.");
+      setFramingStatus("Camera permission is required for interview framing.");
+      setEyeTrackingSamples(0);
+      setEyeContactScore(0);
       return;
     }
 
-    if (!optionalFaceDetector) {
-      setFramingStatus(
-        "Advanced face detection is unavailable in Expo Go. Camera guide is active; use a development build for strict eye detection."
-      );
-      return;
-    }
-
-    if (!cameraRef.current || busy || isSubmittingInterviewAnswer || recording) {
+    if (!cameraRef.current || busy || isSubmittingInterviewAnswer) {
       return;
     }
 
     try {
       setIsCheckingFraming(true);
-      const capture = await cameraRef.current.takePictureAsync({ quality: 0.28, skipProcessing: true });
-      const detection = await optionalFaceDetector.detectFacesAsync(capture.uri, {
-        mode: optionalFaceDetector.FaceDetectorMode?.fast ?? 1,
-        detectLandmarks: optionalFaceDetector.FaceDetectorLandmarks?.all ?? 2,
-        runClassifications: optionalFaceDetector.FaceDetectorClassifications?.all ?? 2,
+
+      const pushEyeSample = (sample: number) => {
+        const boundedSample = clampNumber(sample, 0, 100);
+        setEyeTrackingSamples((previous) => previous + 1);
+        setEyeContactScore((previous) => {
+          if (previous <= 0) {
+            return boundedSample;
+          }
+          return clampNumber(Math.round(previous * 0.74 + boundedSample * 0.26), 0, 100);
+        });
+      };
+
+      const detector = await getOptionalFaceDetector();
+      if (!detector) {
+        setEyeTrackingSamples(0);
+        setEyeContactScore(0);
+        setFramingStatus(
+          "Camera is live and framing guide is active. Advanced eye tracking is unavailable on this runtime (use a development build for strict eye detection)."
+        );
+        return;
+      }
+
+      const capture = await cameraRef.current.takePictureAsync({ quality: 0.24, skipProcessing: true });
+      const detection = await detector.detectFacesAsync(capture.uri, {
+        mode: detector.FaceDetectorMode?.fast ?? 1,
+        detectLandmarks: detector.FaceDetectorLandmarks?.all ?? 2,
+        runClassifications: detector.FaceDetectorClassifications?.all ?? 2,
       });
 
       const primaryFace = detection.faces[0];
       if (!primaryFace) {
-        setFramingStatus("No face detected. Keep your full face in frame and hold still.");
+        pushEyeSample(10);
+        setFramingStatus("No face detected. Keep your face centered and hold still for 1-2 seconds.");
         return;
       }
 
@@ -275,42 +434,37 @@ export function InterviewScreen() {
       const centeredVertically = Math.abs(centerY - imageHeight / 2) <= imageHeight * 0.22;
       const faceWidthRatio = primaryFace.bounds.size.width / imageWidth;
       const eyeLandmarksDetected = Boolean(primaryFace.leftEyePosition && primaryFace.rightEyePosition);
-      const eyeProbabilitiesAvailable =
-        typeof primaryFace.leftEyeOpenProbability === "number" &&
-        typeof primaryFace.rightEyeOpenProbability === "number";
 
       if (!eyeLandmarksDetected) {
-        setFramingStatus("Face detected, but eyes were not detected. Improve lighting and keep camera at eye level.");
+        pushEyeSample(28);
+        setFramingStatus("Face detected, but eyes not stable yet. Improve front lighting and keep camera at eye level.");
         return;
       }
 
       if (faceWidthRatio < 0.17) {
-        setFramingStatus("Face + eyes detected. Move closer to camera for better tracking.");
+        pushEyeSample(42);
+        setFramingStatus("Eyes detected. Move slightly closer for better eye tracking quality.");
         return;
       }
 
       if (faceWidthRatio > 0.62) {
-        setFramingStatus("Face + eyes detected. Move slightly back to keep head and shoulders in frame.");
+        pushEyeSample(45);
+        setFramingStatus("Eyes detected. Move slightly back so head and shoulders remain visible.");
         return;
       }
 
       if (!centeredHorizontally || !centeredVertically) {
-        setFramingStatus("Face + eyes detected. Re-center your face inside the frame guide.");
+        pushEyeSample(52);
+        setFramingStatus("Eyes detected. Re-center your face inside the framing guide.");
         return;
       }
 
-      if (eyeProbabilitiesAvailable) {
-        const leftOpen = (primaryFace.leftEyeOpenProbability ?? 0) > 0.25;
-        const rightOpen = (primaryFace.rightEyeOpenProbability ?? 0) > 0.25;
-        if (!leftOpen || !rightOpen) {
-          setFramingStatus("Face + eyes detected. Keep both eyes visible and avoid looking down.");
-          return;
-        }
-      }
-
-      setFramingStatus("Face + eyes detection is healthy. Framing looks interview-ready.");
+      pushEyeSample(92);
+      setFramingStatus("Face + eyes detection healthy. You are interview-ready.");
     } catch {
-      setFramingStatus("Framing check failed. Reopen camera permissions and try again.");
+      setEyeTrackingSamples(0);
+      setEyeContactScore(0);
+      setFramingStatus("Camera check failed. Reopen permissions and retry.");
     } finally {
       setIsCheckingFraming(false);
     }
@@ -325,33 +479,34 @@ export function InterviewScreen() {
   }, []);
 
   useEffect(() => {
-    if (!interview.active || !currentQuestion) {
-      return;
-    }
-
-    if (spokenQuestionIdRef.current === currentQuestion.id) {
-      return;
-    }
-
-    spokenQuestionIdRef.current = currentQuestion.id;
-    void speakQuestionAloud(currentQuestion.prompt);
-  }, [currentQuestion, interview.active]);
-
-  useEffect(() => {
-    if (!interview.active || !canUseCamera) {
-      clearFramingTimer();
+    if (isFocused) {
       return;
     }
 
     clearFramingTimer();
+    setIsCheckingFraming(false);
+    setIsSpeakingQuestion(false);
+    setVoiceStatus("Interviewer paused because Interview tab is not active.");
+    void releaseInterviewerAudio();
+  }, [isFocused]);
+
+  useEffect(() => {
+    if (!isFocused || !interview.active || !canUseCamera) {
+      clearFramingTimer();
+      return;
+    }
+
+    void runFramingCheck();
+
+    clearFramingTimer();
     framingIntervalRef.current = setInterval(() => {
       void runFramingCheck();
-    }, 9000);
+    }, 3200);
 
     return () => {
       clearFramingTimer();
     };
-  }, [canUseCamera, interview.active, recording, busy, isSubmittingInterviewAnswer]);
+  }, [canUseCamera, interview.active, recording, busy, isFocused, isSubmittingInterviewAnswer]);
 
   const ensureAudioPermission = async () => {
     if (audioPermission) return true;
@@ -384,6 +539,7 @@ export function InterviewScreen() {
   const beginSession = () => {
     clearLastError();
     spokenQuestionIdRef.current = "";
+    hasGreetedRef.current = false;
     startInterview({
       domain: selectedDomain,
       difficulty: selectedDifficulty,
@@ -401,6 +557,10 @@ export function InterviewScreen() {
     setRecordedSeconds(0);
     setAnswerDraft("");
     setLastClipUri("");
+    setShowHints(false);
+    setShowHistory(false);
+    setEyeContactScore(0);
+    setEyeTrackingSamples(0);
   };
 
   const discardRecording = async () => {
@@ -452,6 +612,7 @@ export function InterviewScreen() {
       await rec.startAsync();
       setRecording(rec);
       setRecordedSeconds(0);
+      setLastClipUri("");
       setStatus("Recording started. Speak with structure, then stop to evaluate.");
 
       const timer = setInterval(async () => {
@@ -475,35 +636,65 @@ export function InterviewScreen() {
     }
   };
 
+  const stopRecording = async () => {
+    if (!recording) {
+      return;
+    }
+
+    try {
+      setBusy(true);
+      clearRecordingTimer();
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI() ?? "";
+      setLastClipUri(uri);
+      setStatus(
+        uri
+          ? "Recording captured. Add a short recap if needed, then evaluate."
+          : "Recording stopped, but no audio file was detected. Try again."
+      );
+    } catch {
+      setStatus("Could not stop recording cleanly. Please retry.");
+    } finally {
+      await resetAudioMode();
+      setRecording(null);
+      setBusy(false);
+    }
+  };
+
   const evaluateCurrentAnswer = async () => {
     if (!interview.active || !currentQuestion) {
       return;
     }
 
-    if (!recording && answerDraft.trim().length < 20) {
-      setStatus("Write at least a short answer draft if you are not using audio recording.");
+    if (recording) {
+      setStatus("Stop recording first, then evaluate your response.");
+      return;
+    }
+
+    if (!lastClipUri) {
+      setStatus("Record your response first, then submit and evaluate.");
       return;
     }
 
     try {
       setBusy(true);
 
-      let uri = lastClipUri;
+      const uri = lastClipUri;
       let durationSec = recordedSeconds;
-
-      if (recording) {
-        clearRecordingTimer();
-        await recording.stopAndUnloadAsync();
-        uri = recording.getURI() ?? "";
-        setLastClipUri(uri);
-      }
-
-      if (!uri) {
-        uri = `typed://manual-${Date.now()}`;
-      }
-
       if (durationSec <= 0) {
-        durationSec = Math.max(12, Math.min(120, Math.round(answerDraft.trim().split(/\s+/).length / 1.8)));
+        durationSec = targetDurationSec;
+      }
+
+      let audioBase64 = "";
+      if (uri && !uri.startsWith("typed://")) {
+        try {
+          const audioFile = new File(uri);
+          if (audioFile.exists) {
+            audioBase64 = await audioFile.base64();
+          }
+        } catch {
+          // best-effort audio payload for backend transcription
+        }
       }
 
       setStatus("Evaluating answer with AI rubric...");
@@ -511,7 +702,8 @@ export function InterviewScreen() {
       const result = await submitInterviewAnswer({
         audioUri: uri,
         durationSec,
-        transcript: answerDraft.trim(),
+        audioBase64: audioBase64 || undefined,
+        transcript: "",
       });
 
       setLatestScore(result.score);
@@ -523,16 +715,16 @@ export function InterviewScreen() {
       setStatus(
         result.completed
           ? "Interview complete. Review your rubric breakdown and restart for another run."
-          : "Answer evaluated. Move to next question and keep improving weak dimensions."
+          : "Answer evaluated. Next question is now adapted from this response."
       );
 
       setAnswerDraft("");
       setRecordedSeconds(0);
+      setLastClipUri("");
     } catch {
       setStatus("Could not evaluate current answer. Try again.");
     } finally {
       await resetAudioMode();
-      setRecording(null);
       setBusy(false);
     }
   };
@@ -540,7 +732,7 @@ export function InterviewScreen() {
   return (
     <ScreenContainer
       title="AI Interview"
-      subtitle="Rewritten flow: better prompts, hints, rubric, strengths, and actionables"
+      subtitle="Guided, adaptive interview flow with voice and coaching"
     >
       {(!interview.active && !interview.completed) || showSetupCard ? (
       <GlassCard>
@@ -650,27 +842,7 @@ export function InterviewScreen() {
           </ThemedText>
         )}
       </GlassCard>
-      ) : (
-        <GlassCard>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <ThemedText variant="label" muted>
-                Active Setup
-              </ThemedText>
-              <ThemedText variant="body" strong style={{ marginTop: 4 }}>
-                {selectedDomain} • {selectedDifficulty} • {selectedFocusTopic} • {selectedQuestionCount} question(s)
-              </ThemedText>
-            </View>
-            <PrimaryButton
-              label="Edit"
-              secondary
-              onPress={() => {
-                setShowSetupCard(true);
-              }}
-            />
-          </View>
-        </GlassCard>
-      )}
+      ) : null}
 
       {(interview.active || interview.completed) && (
         <>
@@ -680,22 +852,30 @@ export function InterviewScreen() {
                 ? "Session Summary"
                 : `Question ${interview.currentIndex + 1} of ${interview.questions.length}`}
             </ThemedText>
-            <ThemedText variant="title" strong style={{ marginTop: 6 }}>
+            <ThemedText variant="title" strong style={{ marginTop: 6 }} numberOfLines={isLiveInterview ? 3 : undefined}>
               {interview.completed ? "Interview finished" : currentQuestion?.prompt ?? "Preparing question..."}
             </ThemedText>
-            {!interview.completed && currentQuestion && (
-              <View style={{ marginTop: 10, gap: 6 }}>
-                <ThemedText variant="label" muted>
-                  Hints
-                </ThemedText>
-                {currentHints.map((hint) => (
-                  <ThemedText key={hint} variant="body" muted>
-                    - {hint}
-                  </ThemedText>
-                ))}
+            {!interview.completed && currentQuestion && !isLiveInterview && (
+              <View style={{ marginTop: 10, gap: 8 }}>
+                <PrimaryButton
+                  label={showHints ? "Hide Hints" : "Show Hints"}
+                  secondary
+                  onPress={() => {
+                    setShowHints((prev) => !prev);
+                  }}
+                />
+                {showHints && (
+                  <View style={{ gap: 6 }}>
+                    {currentHints.map((hint) => (
+                      <ThemedText key={hint} variant="body" muted>
+                        - {hint}
+                      </ThemedText>
+                    ))}
+                  </View>
+                )}
               </View>
             )}
-            <ThemedText variant="body" muted style={{ marginTop: 8 }}>
+            <ThemedText variant="body" muted style={{ marginTop: 8 }} numberOfLines={isLiveInterview ? 2 : undefined}>
               {status}
             </ThemedText>
 
@@ -703,16 +883,28 @@ export function InterviewScreen() {
               <>
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
                   <PrimaryButton
-                    label={isSpeakingQuestion ? "Speaking..." : "Read Question Aloud"}
+                    label={isSpeakingQuestion ? "Speaking..." : "Read Prompt"}
                     secondary
                     style={{ flex: 1 }}
                     disabled={isSpeakingQuestion || busy || isSubmittingInterviewAnswer}
                     onPress={() => {
-                      void speakQuestionAloud(currentQuestion.prompt);
+                      const isFirstQuestion = interview.currentIndex === 0 && interview.answers.length === 0;
+                      const cleanName = profile.name.trim();
+                      const shouldUseName = cleanName.length > 0 && cleanName.toLowerCase() !== "your name";
+                      const shouldGreet = isFirstQuestion && !hasGreetedRef.current;
+                      if (shouldGreet) {
+                        hasGreetedRef.current = true;
+                      }
+                      const speech = buildInterviewerSpeech({
+                        question: currentQuestion.prompt,
+                        isFirstQuestion: shouldGreet,
+                        candidateName: shouldUseName ? cleanName : "",
+                      });
+                      void speakQuestionAloud(speech.ssml, speech.plain);
                     }}
                   />
                   <PrimaryButton
-                    label="Stop Voice"
+                    label="Stop"
                     style={{ flex: 1 }}
                     onPress={() => {
                       void (async () => {
@@ -728,173 +920,156 @@ export function InterviewScreen() {
                 </ThemedText>
               </>
             )}
+          </GlassCard>
 
-            {!interview.completed && (
-              <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+          {isLiveInterview && (
+            <GlassCard>
+              <View style={styles.cameraHeadRow}>
+                <ThemedText variant="title" strong>
+                  Response Controls
+                </ThemedText>
+                <ThemedText variant="body" muted>
+                  {recording ? "Recording" : "Ready"}
+                </ThemedText>
+              </View>
+
+              <View
+                style={[
+                  styles.cameraFrame,
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.cardAlt,
+                  },
+                ]}
+              >
+                {canUseCamera ? (
+                  <>
+                    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
+                    <View style={styles.framingGuideOuter}>
+                      <View style={styles.framingGuideInner} />
+                    </View>
+                  </>
+                ) : (
+                  <View style={styles.cameraFallback}>
+                    <ThemedText variant="body" muted>
+                      Camera permission required for validation.
+                    </ThemedText>
+                    <PrimaryButton
+                      label="Turn Camera On"
+                      style={{ marginTop: 12, alignSelf: "stretch" }}
+                      onPress={() => {
+                        requestCameraPermission();
+                      }}
+                    />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.compactActionRow}>
                 <PrimaryButton
-                  label="Clear Draft"
+                  label="Camera + Validate"
                   secondary
-                  style={{ flex: 1 }}
-                  onPress={() => {
-                    setAnswerDraft("");
-                    setStatus("Draft cleared. Capture or type a fresh answer.");
-                  }}
-                />
-                <PrimaryButton
-                  label="Grant Camera + Mic"
                   style={{ flex: 1 }}
                   onPress={requestAllPermissions}
                 />
+                <PrimaryButton
+                  label={isCheckingFraming ? "Validating..." : "Validate Again"}
+                  style={{ flex: 1 }}
+                  disabled={!canUseCamera || isCheckingFraming || busy || isSubmittingInterviewAnswer}
+                  onPress={() => {
+                    void runFramingCheck();
+                  }}
+                />
               </View>
-            )}
-          </GlassCard>
 
-          <GlassCard>
-            <View style={styles.cameraHeadRow}>
-              <ThemedText variant="title" strong>
-                Face Framing
-              </ThemedText>
-              <ThemedText variant="body" muted>
-                {canUseCamera ? (hasAdvancedFaceDetection ? "Live + Detect" : "Live guide") : "Permission needed"}
-              </ThemedText>
-            </View>
+              <View style={styles.framingStatusRow}>
+                {isCheckingFraming && <ActivityIndicator size="small" color={theme.colors.accent} />}
+                <ThemedText variant="body" muted style={{ flex: 1 }}>
+                  {framingStatus}
+                </ThemedText>
+              </View>
 
-            <View
-              style={[
-                styles.cameraFrame,
-                {
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.cardAlt,
-                },
-              ]}
-            >
-              {canUseCamera ? (
-                <>
-                  <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
-                  <View style={styles.framingGuideOuter}>
-                    <View style={styles.framingGuideInner} />
-                  </View>
-                </>
-              ) : (
-                <View style={styles.cameraFallback}>
-                  <ThemedText variant="body" muted>
-                    Camera permission required for live framing.
-                  </ThemedText>
-                  <PrimaryButton
-                    label="Allow Camera"
-                    style={{ marginTop: 12, alignSelf: "stretch" }}
-                    onPress={() => {
-                      requestCameraPermission();
-                    }}
-                  />
-                </View>
+              <View style={styles.metaRow}>
+                <ThemedText variant="label" muted>
+                  Eye Contact
+                </ThemedText>
+                <ThemedText variant="body" strong>
+                  {hasAdvancedFaceDetection ? `${eyeContactScore}%` : "Preview"}
+                </ThemedText>
+              </View>
+
+              <View style={[styles.scoreTrack, { backgroundColor: theme.colors.cardAlt }]}>
+                <View
+                  style={{
+                    width: `${Math.max(0, Math.min(100, eyeContactScore))}%`,
+                    height: "100%",
+                    backgroundColor: theme.colors.accent,
+                  }}
+                />
+              </View>
+              <ThemedText variant="body" muted style={{ marginTop: 8 }}>
+                {eyeContactHint}
+              </ThemedText>
+
+              <View style={{ marginTop: 14 }}>
+                <RecordingButton
+                  isRecording={!!recording}
+                  disabled={busy || !interview.active || isSubmittingInterviewAnswer}
+                  startLabel="Record Response"
+                  stopLabel="Stop Recording"
+                  onPress={() => {
+                    void (recording ? stopRecording() : startRecording());
+                  }}
+                />
+              </View>
+
+              <View style={styles.compactActionRow}>
+                <PrimaryButton
+                  label="Submit & Evaluate"
+                  secondary
+                  style={{ flex: 1 }}
+                  disabled={busy || !!recording || !lastClipUri || !interview.active || isSubmittingInterviewAnswer}
+                  onPress={evaluateCurrentAnswer}
+                />
+              </View>
+
+              <View style={styles.metaRow}>
+                <ThemedText variant="label" muted>
+                  Duration
+                </ThemedText>
+                <ThemedText variant="body" strong>
+                  {formatSeconds(recordedSeconds)} / {formatSeconds(targetDurationSec)}
+                </ThemedText>
+              </View>
+
+              <View style={[styles.scoreTrack, { backgroundColor: theme.colors.cardAlt }]}>
+                <View
+                  style={{
+                    width: `${Math.min(100, Math.round((recordedSeconds / targetDurationSec) * 100))}%`,
+                    height: "100%",
+                    backgroundColor: theme.colors.accent,
+                  }}
+                />
+              </View>
+
+              <View style={styles.metaRow}>
+                <ThemedText variant="label" muted>
+                  Last Clip
+                </ThemedText>
+                <ThemedText variant="body" muted style={{ maxWidth: "62%" }} numberOfLines={1}>
+                  {lastClipUri || "No recording yet"}
+                </ThemedText>
+              </View>
+
+              {isSubmittingInterviewAnswer && (
+                <ThemedText variant="body" muted style={{ marginTop: 8 }}>
+                  Evaluating response and moving to next question...
+                </ThemedText>
               )}
-            </View>
+            </GlassCard>
+          )}
 
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
-              <PrimaryButton
-                label={isCheckingFraming ? "Checking..." : "Run Face + Eye Check"}
-                style={{ flex: 1 }}
-                disabled={!canUseCamera || !hasAdvancedFaceDetection || isCheckingFraming || busy || isSubmittingInterviewAnswer}
-                onPress={() => {
-                  void runFramingCheck();
-                }}
-              />
-            </View>
-            <View style={styles.framingStatusRow}>
-              {isCheckingFraming && <ActivityIndicator size="small" color={theme.colors.accent} />}
-              <ThemedText variant="body" muted style={{ flex: 1 }}>
-                {framingStatus}
-              </ThemedText>
-            </View>
-          </GlassCard>
-
-          <GlassCard>
-            <ThemedText variant="title" strong>
-              Answer Workspace
-            </ThemedText>
-            <ThemedText variant="body" muted style={{ marginTop: 6 }}>
-              Use voice recording or type a transcript draft. AI evaluation uses both if available.
-            </ThemedText>
-
-            <View style={{ marginTop: 14 }}>
-              <RecordingButton
-                isRecording={!!recording}
-                disabled={busy || !interview.active || isSubmittingInterviewAnswer}
-                onPress={() => {
-                  void (recording ? evaluateCurrentAnswer() : startRecording());
-                }}
-              />
-            </View>
-
-            <PrimaryButton
-              label="Evaluate Typed Draft"
-              secondary
-              style={{ marginTop: 10 }}
-              disabled={busy || !!recording || !interview.active || isSubmittingInterviewAnswer}
-              onPress={evaluateCurrentAnswer}
-            />
-
-            {isSubmittingInterviewAnswer && (
-              <ThemedText variant="body" muted style={{ marginTop: 10 }}>
-                Evaluating answer quality and generating improvements...
-              </ThemedText>
-            )}
-
-            <View style={styles.metaRow}>
-              <ThemedText variant="label" muted>
-                Duration
-              </ThemedText>
-              <ThemedText variant="body" strong>
-                {formatSeconds(recordedSeconds)} / {formatSeconds(targetDurationSec)}
-              </ThemedText>
-            </View>
-
-            <View
-              style={{
-                marginTop: 8,
-                height: 8,
-                borderRadius: 999,
-                backgroundColor: theme.colors.cardAlt,
-                overflow: "hidden",
-              }}
-            >
-              <View
-                style={{
-                  width: `${Math.min(100, Math.round((recordedSeconds / targetDurationSec) * 100))}%`,
-                  height: "100%",
-                  backgroundColor: theme.colors.accent,
-                }}
-              />
-            </View>
-
-            <View style={styles.metaRow}>
-              <ThemedText variant="label" muted>
-                Last Clip
-              </ThemedText>
-              <ThemedText variant="body" muted style={{ maxWidth: "65%" }} numberOfLines={1}>
-                {lastClipUri || "No recording yet"}
-              </ThemedText>
-            </View>
-
-            <TextInput
-              value={answerDraft}
-              onChangeText={setAnswerDraft}
-              multiline
-              placeholder="Type your answer draft or transcript here for better AI evaluation quality..."
-              placeholderTextColor={theme.colors.textMuted}
-              style={[
-                styles.answerInput,
-                {
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text,
-                  backgroundColor: theme.colors.cardAlt,
-                },
-              ]}
-            />
-          </GlassCard>
-
-          {latestScore !== null && latestRubric && (
+          {!isLiveInterview && latestScore !== null && latestRubric && (
             <GlassCard>
               <ThemedText variant="title" strong>
                 Evaluation
@@ -961,45 +1136,58 @@ export function InterviewScreen() {
             </GlassCard>
           )}
 
-          <GlassCard>
-            <ThemedText variant="title" strong>
-              Answer History
-            </ThemedText>
-            <View style={{ marginTop: 10, gap: 8 }}>
-              {interview.answers.length === 0 ? (
-                <ThemedText variant="body" muted>
-                  No answers evaluated yet.
+          {!isLiveInterview && (
+            <GlassCard>
+              <View style={styles.cameraHeadRow}>
+                <ThemedText variant="title" strong>
+                  Answer History
                 </ThemedText>
-              ) : (
-                interview.answers.map((answer, index) => {
-                  const info = questionById.get(answer.questionId);
-                  return (
-                    <View
-                      key={`${answer.questionId}-${index}`}
-                      style={[
-                        styles.answerItem,
-                        {
-                          borderColor: theme.colors.border,
-                          backgroundColor: theme.colors.cardAlt,
-                        },
-                      ]}
-                    >
-                      <ThemedText variant="body" strong>
-                        Q{index + 1} ({info?.topic ?? "Domain"}) - Score {answer.score}
-                      </ThemedText>
-                      <ThemedText variant="body" muted style={{ marginTop: 4 }} numberOfLines={2}>
-                        {answer.transcript || "No transcript captured"}
-                      </ThemedText>
-                    </View>
-                  );
-                })
+                <PrimaryButton
+                  label={showHistory ? "Hide" : "Show"}
+                  secondary
+                  onPress={() => {
+                    setShowHistory((prev) => !prev);
+                  }}
+                />
+              </View>
+              {showHistory && (
+                <View style={{ marginTop: 10, gap: 8 }}>
+                  {interview.answers.length === 0 ? (
+                    <ThemedText variant="body" muted>
+                      No answers evaluated yet.
+                    </ThemedText>
+                  ) : (
+                    interview.answers.map((answer, index) => {
+                      const info = questionById.get(answer.questionId);
+                      return (
+                        <View
+                          key={`${answer.questionId}-${index}`}
+                          style={[
+                            styles.answerItem,
+                            {
+                              borderColor: theme.colors.border,
+                              backgroundColor: theme.colors.cardAlt,
+                            },
+                          ]}
+                        >
+                          <ThemedText variant="body" strong>
+                            Q{index + 1} ({info?.topic ?? "Domain"}) - Score {answer.score}
+                          </ThemedText>
+                          <ThemedText variant="body" muted style={{ marginTop: 4 }} numberOfLines={2}>
+                            {answer.transcript || "No transcript captured"}
+                          </ThemedText>
+                        </View>
+                      );
+                    })
+                  )}
+                </View>
               )}
-            </View>
-          </GlassCard>
+            </GlassCard>
+          )}
         </>
       )}
 
-      {Platform.OS === "ios" ? null : (
+      {isLiveInterview || Platform.OS === "ios" ? null : (
         <GlassCard>
           <ThemedText variant="body" muted>
             Tip: Android emulator preview is usually weaker than physical iPhone front camera quality.
@@ -1072,6 +1260,11 @@ function RubricRow({ label, value }: { label: string; value: number }) {
 }
 
 const styles = StyleSheet.create({
+  liveNoScrollContent: {
+    flex: 1,
+    gap: 12,
+    paddingBottom: 10,
+  },
   chipWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1088,10 +1281,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 10,
+  },
+  studioHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  liveStudioCard: {
+    flex: 1,
+    minHeight: 0,
+  },
+  studioSplit: {
+    marginTop: 12,
+    gap: 12,
+    flex: 1,
+    minHeight: 0,
+  },
+  studioSplitWide: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  cameraPane: {
+    flex: 1,
+    minHeight: 0,
+  },
+  responsePane: {
+    flex: 1,
+    minHeight: 0,
+  },
+  compactActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 10,
   },
   cameraFrame: {
     marginTop: 12,
-    height: 240,
+    height: 218,
     borderWidth: 1,
     borderRadius: 16,
     overflow: "hidden",
@@ -1127,9 +1354,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 12,
   },
-  answerInput: {
-    marginTop: 12,
-    minHeight: 120,
+  scoreTrack: {
+    marginTop: 8,
+    height: 8,
+    borderRadius: 999,
+    overflow: "hidden",
+  },
+  answerInputCompact: {
+    marginTop: 10,
+    minHeight: 102,
+    maxHeight: 132,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,

@@ -9,6 +9,7 @@ export type InterviewEvaluationInput = {
   prompt: string;
   durationSec: number;
   audioUri: string;
+  audioBase64?: string;
   transcript?: string;
 };
 
@@ -25,6 +26,7 @@ export type InterviewEvaluationResult = {
   rubric: InterviewRubric;
   strengths: string[];
   improvements: string[];
+  transcript?: string;
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -240,6 +242,7 @@ function evaluateAnswerLocally(input: InterviewEvaluationInput): InterviewEvalua
     rubric,
     strengths: buildStrengths(score, rubric, input.transcript, input.durationSec),
     improvements: buildImprovements(input.topic, rubric, transcriptProvided, input.durationSec),
+    transcript: input.transcript?.trim() || "",
   };
 }
 

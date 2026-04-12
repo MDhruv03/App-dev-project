@@ -7,9 +7,17 @@ type Props = {
   isRecording: boolean;
   onPress: () => void | Promise<void>;
   disabled?: boolean;
+  startLabel?: string;
+  stopLabel?: string;
 };
 
-export function RecordingButton({ isRecording, onPress, disabled }: Props) {
+export function RecordingButton({
+  isRecording,
+  onPress,
+  disabled,
+  startLabel = "Start Recording",
+  stopLabel = "Stop Recording",
+}: Props) {
   const { theme } = useAppTheme();
 
   return (
@@ -27,7 +35,7 @@ export function RecordingButton({ isRecording, onPress, disabled }: Props) {
     >
       <View style={styles.innerDot} />
       <ThemedText variant="body" strong style={styles.label}>
-        {isRecording ? "Stop & Submit" : "Start Recording"}
+        {isRecording ? stopLabel : startLabel}
       </ThemedText>
     </Pressable>
   );

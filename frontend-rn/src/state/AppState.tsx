@@ -4,6 +4,7 @@ import { USE_MOCK_SERVICES, hasApiBaseUrl } from "../config/env";
 import { syncCodingProfiles } from "../services/codingService";
 import {
   evaluateInterviewAnswer,
+  type InterviewEvaluationResult,
   type InterviewRubric,
 } from "../services/interviewService";
 import {
@@ -202,12 +203,13 @@ type AppStateValue = {
   submitInterviewAnswer: (payload: {
     audioUri: string;
     durationSec: number;
+    audioBase64?: string;
     transcript?: string;
   }) => Promise<SubmitResult>;
   resetInterview: () => void;
 };
 
-const APP_STATE_STORAGE_KEY = "@madlab/app-state:v2";
+const APP_STATE_STORAGE_KEY_PREFIX = "@madlab/app-state:v2";
 const PERSISTENCE_VERSION = 2;
 const MAX_PERSISTED_ANSWERS = 30;
 const MAX_ACTIVITY_LOGS = 100;
@@ -215,24 +217,20 @@ const MAX_ACTIVITY_LOGS = 100;
 const initialCoding: CodingState = {
   leetCodeHandle: "",
   codeforcesHandle: "",
-  solved: 182,
-  mediumHard: 64,
-  rating: 1462,
-  depth: 71,
-  status: "Not synced yet",
-  contests: [
-    { title: "Codeforces Round #1002", time: "Sat 18:30", duration: "2h" },
-    { title: "LeetCode Weekly 447", time: "Sun 08:00", duration: "1h 30m" },
-    { title: "Biweekly Contest 157", time: "Sun 20:30", duration: "1h 30m" },
-  ],
+  solved: 0,
+  mediumHard: 0,
+  rating: 0,
+  depth: 0,
+  status: "Connect your coding handles to sync real progress.",
+  contests: [],
   lastSyncedAt: 0,
 };
 
 const initialProfile: ProfileState = {
-  name: "Your Name",
-  email: "you@email.com",
-  skills: "Kotlin, React Native, SQL, System Design",
-  roles: "Mobile Engineer, SDE",
+  name: "",
+  email: "",
+  skills: "",
+  roles: "",
   savedAt: 0,
 };
 
@@ -406,6 +404,156 @@ const AppStateContext = createContext<AppStateValue | undefined>(undefined);
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+type RubricDimension = keyof InterviewRubric;
+
+const TRANSCRIPT_STOP_WORDS = new Set([
+  "about",
+  "after",
+  "again",
+  "also",
+  "because",
+  "before",
+  "being",
+  "between",
+  "could",
+  "from",
+  "have",
+  "into",
+  "just",
+  "like",
+  "many",
+  "more",
+  "most",
+  "only",
+  "other",
+  "over",
+  "really",
+  "some",
+  "than",
+  "that",
+  "their",
+  "there",
+  "these",
+  "they",
+  "this",
+  "very",
+  "what",
+  "when",
+  "where",
+  "which",
+  "while",
+  "with",
+  "would",
+  "your",
+]);
+
+function extractTranscriptKeywords(transcript: string): string[] {
+  const tokens = transcript
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 4 && !TRANSCRIPT_STOP_WORDS.has(token));
+
+  const frequency = new Map<string, number>();
+  for (const token of tokens) {
+    frequency.set(token, (frequency.get(token) ?? 0) + 1);
+  }
+
+  return [...frequency.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([token]) => token);
+}
+
+function getWeakestDimension(rubric: InterviewRubric): RubricDimension {
+  const ranked = Object.entries(rubric) as Array<[RubricDimension, number]>;
+  ranked.sort((a, b) => a[1] - b[1]);
+  return ranked[0][0];
+}
+
+function weakestDimensionCoachingCue(dimension: RubricDimension): string {
+  if (dimension === "content") {
+    return "State one measurable outcome and one explicit trade-off from your decision";
+  }
+  if (dimension === "structure") {
+    return "Answer in this order: context, your action, trade-off, and result";
+  }
+  if (dimension === "clarity") {
+    return "Use short, concrete sentences and avoid jumping between unrelated points";
+  }
+  return "Sound decisive by naming what you owned, what changed, and why it mattered";
+}
+
+function naturalFollowUpByTopic(topic: InterviewTopic): string {
+  if (topic === "DSA") {
+    return "Walk me through your data-structure choice, then compare one alternative and explain the trade-off.";
+  }
+  if (topic === "System Design") {
+    return "Design this in a production setting: describe architecture, failure modes, and how you would monitor it.";
+  }
+  if (topic === "Behavioral") {
+    return "Tell this like a real story: context, what you personally did, and the measurable outcome.";
+  }
+  return "Give a concrete real-world example, then justify why your approach was the right call.";
+}
+
+function buildAdaptiveFollowUpQuestion(params: {
+  previousQuestion: InterviewQuestion;
+  transcript: string;
+  evaluation: InterviewEvaluationResult;
+  domain: InterviewDomain;
+  difficulty: InterviewDifficulty;
+  nextQuestionNumber: number;
+}): InterviewQuestion {
+  const transcript = params.transcript.trim();
+  const keywords = extractTranscriptKeywords(transcript);
+  const weakestDimension = getWeakestDimension(params.evaluation.rubric);
+  const coachingCue = weakestDimensionCoachingCue(weakestDimension);
+  const firstImprovement = params.evaluation.improvements[0] ?? "Keep your answer evidence-driven.";
+  const topicFollowUp = naturalFollowUpByTopic(params.previousQuestion.topic);
+
+  const toneCue =
+    params.evaluation.score >= 82
+      ? "Nice work. Let us push this one level deeper."
+      : params.evaluation.score >= 65
+      ? "Good base. Let us make it sharper and more convincing."
+      : "No stress. Let us rebuild this answer with stronger structure and confidence.";
+
+  const difficultyCue =
+    params.difficulty === "Hard"
+      ? "Assume 10x scale, include failure modes, and explain what you would monitor."
+      : params.difficulty === "Easy"
+      ? "Keep it simple and concrete with one real example."
+      : "Include at least one explicit trade-off and one success metric.";
+
+  const contextCue =
+    keywords.length > 0
+      ? `In your last answer, you mentioned ${keywords.map((item) => `"${item}"`).join(", ")}.`
+      : "Let us build directly on your previous response.";
+
+  const prompt = [
+    toneCue,
+    contextCue,
+    `Follow-up question: ${topicFollowUp}`,
+    `Coaching cue: ${coachingCue}.`,
+    difficultyCue,
+  ].join(" ");
+
+  const idSuffix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  return {
+    id: `${params.domain}-adaptive-${params.nextQuestionNumber}-${idSuffix}`,
+    topic: params.previousQuestion.topic,
+    prompt,
+    hints: [
+      "Reference one concrete scenario from your own project work.",
+      firstImprovement,
+      `Focus dimension: ${weakestDimension}.`,
+    ],
+  };
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -709,7 +857,14 @@ function sortByStatusWeight(status: TrackerStatus): number {
   return weights[status];
 }
 
-export function AppStateProvider({ children }: { children: React.ReactNode }) {
+export function AppStateProvider({
+  children,
+  userId,
+}: {
+  children: React.ReactNode;
+  userId: string;
+}) {
+  const appStateStorageKey = `${APP_STATE_STORAGE_KEY_PREFIX}:${userId}`;
   const [profile, setProfile] = useState<ProfileState>(initialProfile);
   const [coding, setCoding] = useState<CodingState>(initialCoding);
   const [opportunities, setOpportunities] = useState<OpportunityRecord[]>([]);
@@ -746,7 +901,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     async function hydrateState() {
       try {
-        const raw = await AsyncStorage.getItem(APP_STATE_STORAGE_KEY);
+        const raw = await AsyncStorage.getItem(appStateStorageKey);
         if (isMounted && raw) {
           const parsed = JSON.parse(raw) as PersistedPayload;
           if (parsed.version === PERSISTENCE_VERSION) {
@@ -805,7 +960,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [appStateStorageKey]);
 
   useEffect(() => {
     if (!isHydrated) {
@@ -826,10 +981,20 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       activityLog: activityLog.slice(0, MAX_ACTIVITY_LOGS),
     };
 
-    void AsyncStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify(payload)).catch(() => {
+    void AsyncStorage.setItem(appStateStorageKey, JSON.stringify(payload)).catch(() => {
       setLastError("Could not persist local updates.");
     });
-  }, [isHydrated, isOpportunityFeedUnlocked, profile, coding, opportunities, applications, interview, activityLog]);
+  }, [
+    appStateStorageKey,
+    isHydrated,
+    isOpportunityFeedUnlocked,
+    profile,
+    coding,
+    opportunities,
+    applications,
+    interview,
+    activityLog,
+  ]);
 
   useEffect(() => {
     if (!isHydrated || USE_MOCK_SERVICES || !hasApiBaseUrl()) {
@@ -1016,21 +1181,74 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [applications, interview.answers]);
 
   const readiness = useMemo(() => {
-    const codingSignal = coding.depth * 0.44 + Math.min(48, coding.rating / 28);
-    const interviewSignal = analytics.avgInterviewScore > 0 ? analytics.avgInterviewScore : 55;
-    const pipelineSignal =
-      analytics.totalApplications > 0
-        ? clampNumber(
-            analytics.interviewCount * 14 + analytics.offerCount * 22 + Math.min(24, analytics.totalApplications * 4),
-            0,
-            100
-          )
-        : 28;
+    const codingSignal = clampNumber(
+      coding.depth * 0.52 + Math.min(34, coding.rating / 36) + Math.min(14, coding.solved / 18),
+      0,
+      100
+    );
+    const interviewSignal = analytics.interviewAttempts > 0 ? analytics.avgInterviewScore : 0;
+    const pipelineSignal = clampNumber(
+      analytics.savedCount * 5 + analytics.totalApplications * 7 + analytics.interviewCount * 12 + analytics.offerCount * 20,
+      0,
+      100
+    );
 
-    return clampNumber(Math.round(codingSignal * 0.4 + interviewSignal * 0.35 + pipelineSignal * 0.25), 0, 100);
-  }, [analytics, coding.depth, coding.rating]);
+    const hasCodingSignal =
+      codingSignal > 0 ||
+      coding.leetCodeHandle.trim().length > 0 ||
+      coding.codeforcesHandle.trim().length > 0;
+    const hasInterviewSignal = analytics.interviewAttempts > 0;
+    const hasPipelineSignal = analytics.savedCount > 0 || analytics.totalApplications > 0;
+
+    let weightedSum = 0;
+    let weight = 0;
+
+    if (hasCodingSignal) {
+      weightedSum += codingSignal * 0.45;
+      weight += 0.45;
+    }
+
+    if (hasInterviewSignal) {
+      weightedSum += interviewSignal * 0.3;
+      weight += 0.3;
+    }
+
+    if (hasPipelineSignal) {
+      weightedSum += pipelineSignal * 0.25;
+      weight += 0.25;
+    }
+
+    if (weight === 0) {
+      return 0;
+    }
+
+    return clampNumber(Math.round(weightedSum / weight), 0, 100);
+  }, [
+    analytics.avgInterviewScore,
+    analytics.interviewAttempts,
+    analytics.interviewCount,
+    analytics.offerCount,
+    analytics.savedCount,
+    analytics.totalApplications,
+    coding.codeforcesHandle,
+    coding.depth,
+    coding.leetCodeHandle,
+    coding.rating,
+    coding.solved,
+  ]);
 
   const dashboardHeadline = useMemo(() => {
+    const firstRunNoSignal =
+      analytics.savedCount === 0 &&
+      analytics.totalApplications === 0 &&
+      analytics.interviewAttempts === 0 &&
+      coding.solved === 0 &&
+      coding.rating === 0;
+
+    if (firstRunNoSignal) {
+      return "Welcome. Add your profile and run your first sync or mock interview to start building signal.";
+    }
+
     if (!isOpportunityFeedUnlocked) {
       return "Your feed is currently curated. Tap Refresh Feed when you want to load roles.";
     }
@@ -1051,7 +1269,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
 
     return `${analytics.totalApplications} active applications. Push one focused practice round today.`;
-  }, [analytics.totalApplications, interview.active, interview.currentIndex, interview.questions.length, isOpportunityFeedUnlocked, tracker]);
+  }, [
+    analytics.interviewAttempts,
+    analytics.savedCount,
+    analytics.totalApplications,
+    coding.rating,
+    coding.solved,
+    interview.active,
+    interview.currentIndex,
+    interview.questions.length,
+    isOpportunityFeedUnlocked,
+    tracker,
+  ]);
 
   const roadmapTasks = useMemo(() => {
     const tasks: string[] = [];
@@ -1120,6 +1349,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const result = await syncCodingProfiles(nextHandles);
+      const usedFallback = result.status.toLowerCase().includes("fallback");
       setCoding((prev) => ({
         ...prev,
         solved: result.solved,
@@ -1129,10 +1359,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         status: result.status,
         lastSyncedAt: Date.now(),
       }));
-      setLastError(null);
+      setLastError(usedFallback ? result.status : null);
       pushActivity("coding", result.status);
       return {
-        ok: true,
+        ok: !usedFallback,
         message: result.status,
       };
     } catch {
@@ -1370,6 +1600,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const submitInterviewAnswer = async (payload: {
     audioUri: string;
     durationSec: number;
+    audioBase64?: string;
     transcript?: string;
   }): Promise<SubmitResult> => {
     const snapshot = interview;
@@ -1396,6 +1627,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         prompt: activeQuestion.prompt,
         durationSec: payload.durationSec,
         audioUri: payload.audioUri,
+        audioBase64: payload.audioBase64,
         transcript: payload.transcript,
       });
 
@@ -1415,6 +1647,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           audioUri: payload.audioUri,
           durationSec: payload.durationSec,
           transcript:
+            evaluation.transcript?.trim() ||
             payload.transcript?.trim() ||
             `Voice response captured (${Math.max(1, Math.round(payload.durationSec))}s).`,
           score: evaluation.score,
@@ -1426,12 +1659,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
         const nextAnswers = [...prev.answers, answer];
         const isLast = prev.currentIndex >= prev.questions.length - 1;
+        const nextIndex = prev.currentIndex + 1;
+        const nextQuestions = [...prev.questions];
+
+        if (!isLast) {
+          nextQuestions[nextIndex] = buildAdaptiveFollowUpQuestion({
+            previousQuestion: question,
+            transcript: payload.transcript?.trim() ?? "",
+            evaluation,
+            domain: prev.config.domain,
+            difficulty: prev.config.difficulty,
+            nextQuestionNumber: nextIndex + 1,
+          });
+        }
+
         completed = isLast;
 
         return {
           ...prev,
+          questions: nextQuestions,
           answers: nextAnswers,
-          currentIndex: isLast ? prev.currentIndex : prev.currentIndex + 1,
+          currentIndex: isLast ? prev.currentIndex : nextIndex,
           active: !isLast,
           completed: isLast,
           endedAt: isLast ? Date.now() : 0,

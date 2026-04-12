@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node scripts/backend-manager.mjs dev 8080",
+    "dev:raw": "node --watch src/index.js",
+    "stop": "node scripts/backend-manager.mjs stop 8080"
   },
   "dependencies": {
     "cors": "^2.8.5",

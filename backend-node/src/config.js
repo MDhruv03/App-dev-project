@@ -32,6 +32,8 @@ export const config = {
   pollyEnabled: parseBoolean(process.env.POLLY_ENABLED ?? process.env.EXPO_PUBLIC_POLLY_ENABLED ?? "false", false),
   pollyProxyUrl: process.env.POLLY_PROXY_URL || process.env.EXPO_PUBLIC_POLLY_PROXY_URL || "",
   pollyVoiceId: process.env.POLLY_VOICE_ID || process.env.EXPO_PUBLIC_POLLY_VOICE_ID || "Aditi",
+  authSessionTtlMs: Number(process.env.AUTH_SESSION_TTL_MS || 30 * 24 * 60 * 60 * 1000),
+  sqliteFilePath: path.resolve(backendRoot, "data", "app.db"),
   dataFilePath: path.resolve(backendRoot, "data", "store.json"),
   envFilePath
 };

@@ -8,6 +8,7 @@ This Expo app is now structured with persisted state, service-layer API boundari
 - React Navigation (bottom tabs)
 - AsyncStorage persistence
 - Camera + audio interview capture
+- Login/signup auth gate with bearer session handling
 
 ## Environment
 Copy `.env.example` to `.env` (or export env vars in CI):
@@ -55,7 +56,23 @@ npx ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
 npx ngrok http 8080
 ```
 
-3. Update `.env` with the generated public URL:
+If Expo tunnel is already running, you can also auto-create the backend tunnel and sync `.env` in one command:
+
+```bash
+npm run api:prepare-ngrok
+```
+
+3. Sync `.env` automatically to the active backend tunnel:
+
+```bash
+npm run api:sync-ngrok
+```
+
+This updates:
+- `EXPO_PUBLIC_API_BASE_URL` to the active tunnel bound to `localhost:8080`
+- `EXPO_PUBLIC_API_FALLBACK_URL` to `http://localhost:8080`
+
+If you prefer manual update, set `.env` to the generated public URL:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=https://your-tunnel.ngrok-free.app
@@ -90,6 +107,15 @@ eas build --platform android --profile production
 
 ## Backend Contract
 Expected endpoints:
+- `POST /auth/signup`
+  - request: `{ name, email, password }`
+  - response: `{ token, user }`
+- `POST /auth/login`
+  - request: `{ email, password }`
+  - response: `{ token, user }`
+- `GET /auth/me`
+  - headers: `Authorization: Bearer <token>`
+  - response: `{ user }`
 - `POST /coding/sync`
   - request: `{ leetCodeHandle, codeforcesHandle }`
   - response: `{ solved, mediumHard, rating, depth, status }`

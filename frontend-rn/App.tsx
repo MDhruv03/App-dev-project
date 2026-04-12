@@ -22,8 +22,10 @@ import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { AnalyticsScreen } from "./src/screens/AnalyticsScreen";
 import { RoadmapScreen } from "./src/screens/RoadmapScreen";
 import { AppStateProvider, useAppState } from "./src/state/AppState";
+import { AuthProvider, useAuth } from "./src/state/AuthState";
 import { AppBootScreen } from "./src/components/AppBootScreen";
 import { AppErrorBoundary } from "./src/components/AppErrorBoundary";
+import { AuthScreen } from "./src/screens/AuthScreen";
 
 type TabParamList = {
   Discover: undefined;
@@ -39,9 +41,8 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 function AppRoot() {
   const { isHydrated } = useAppState();
-  const { isThemeHydrated } = useAppTheme();
 
-  if (!isHydrated || !isThemeHydrated) {
+  if (!isHydrated) {
     return (
       <AppBootScreen
         title="Finalizing app state"
@@ -51,6 +52,30 @@ function AppRoot() {
   }
 
   return <AppTabs />;
+}
+
+function AppShell() {
+  const { isThemeHydrated } = useAppTheme();
+  const { isAuthHydrated, isAuthenticated, user } = useAuth();
+
+  if (!isThemeHydrated || !isAuthHydrated) {
+    return (
+      <AppBootScreen
+        title="Preparing your workspace"
+        message="Loading theme, secure session, and startup context..."
+      />
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return <AuthScreen />;
+  }
+
+  return (
+    <AppStateProvider userId={user.id}>
+      <AppRoot />
+    </AppStateProvider>
+  );
 }
 
 function AppTabs() {
@@ -179,16 +204,16 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <AppErrorBoundary
-        key={boundaryVersion}
-        onReset={() => {
-          setBoundaryVersion((prev) => prev + 1);
-        }}
-      >
-        <AppStateProvider>
-          <AppRoot />
-        </AppStateProvider>
-      </AppErrorBoundary>
+      <AuthProvider>
+        <AppErrorBoundary
+          key={boundaryVersion}
+          onReset={() => {
+            setBoundaryVersion((prev) => prev + 1);
+          }}
+        >
+          <AppShell />
+        </AppErrorBoundary>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

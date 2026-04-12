@@ -134,63 +134,28 @@ function buildDefaultOpportunities(now = Date.now()) {
 }
 
 function buildInitialApplications(now = Date.now()) {
-  return [
-    {
-      opportunityId: "opp-001",
-      status: "Interview",
-      savedAt: now - 8 * DAY,
-      appliedAt: now - 6 * DAY,
-      interviewScheduledAt: now + 2 * DAY,
-      statusUpdatedAt: now - 1 * DAY,
-      responseDate: 0,
-      interviewNote: "Emphasize payments reliability and incident handling."
-    },
-    {
-      opportunityId: "opp-002",
-      status: "Applied",
-      savedAt: now - 5 * DAY,
-      appliedAt: now - 3 * DAY,
-      interviewScheduledAt: 0,
-      statusUpdatedAt: now - 3 * DAY,
-      responseDate: 0,
-      interviewNote: ""
-    },
-    {
-      opportunityId: "opp-003",
-      status: "Saved",
-      savedAt: now - 2 * DAY,
-      appliedAt: 0,
-      interviewScheduledAt: 0,
-      statusUpdatedAt: now - 2 * DAY,
-      responseDate: 0,
-      interviewNote: ""
-    }
-  ];
+  return [];
 }
 
 export function buildDefaultState(now = Date.now()) {
   return {
-    version: 1,
+    version: 2,
     profile: {
-      name: "Your Name",
-      email: "you@email.com",
-      skills: "Kotlin, React Native, SQL, System Design",
-      roles: "Mobile Engineer, SDE",
+      name: "",
+      email: "",
+      skills: "",
+      roles: "",
       savedAt: 0
     },
     coding: {
       leetCodeHandle: "",
       codeforcesHandle: "",
-      solved: 182,
-      mediumHard: 64,
-      rating: 1462,
-      depth: 71,
-      status: "Not synced yet",
-      contests: [
-        { title: "Codeforces Round #1002", time: "Sat 18:30", duration: "2h" },
-        { title: "LeetCode Weekly 447", time: "Sun 08:00", duration: "1h 30m" },
-        { title: "Biweekly Contest 157", time: "Sun 20:30", duration: "1h 30m" }
-      ],
+      solved: 0,
+      mediumHard: 0,
+      rating: 0,
+      depth: 0,
+      status: "Connect your coding handles to sync real progress.",
+      contests: [],
       lastSyncedAt: 0
     },
     opportunities: buildDefaultOpportunities(now),

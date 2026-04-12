@@ -21,7 +21,8 @@ function parseNumber(value: string | undefined, fallback: number): number {
 }
 
 export const APP_ENV = getEnvValue("EXPO_PUBLIC_APP_ENV") ?? "development";
-export const API_BASE_URL = getEnvValue("EXPO_PUBLIC_API_BASE_URL")?.trim() ?? "";
+export const API_BASE_URL = String(getEnvValue("EXPO_PUBLIC_API_BASE_URL") ?? "").trim();
+export const API_FALLBACK_URL = String(getEnvValue("EXPO_PUBLIC_API_FALLBACK_URL") ?? "").trim();
 export const API_TIMEOUT_MS = parseNumber(
   getEnvValue("EXPO_PUBLIC_API_TIMEOUT_MS"),
   DEFAULT_TIMEOUT_MS
@@ -35,9 +36,9 @@ export const POLLY_ENABLED = parseBoolean(
   getEnvValue("EXPO_PUBLIC_POLLY_ENABLED"),
   false
 );
-export const POLLY_PROXY_URL = getEnvValue("EXPO_PUBLIC_POLLY_PROXY_URL")?.trim() ?? "";
-export const POLLY_VOICE_ID = getEnvValue("EXPO_PUBLIC_POLLY_VOICE_ID")?.trim() || "Aditi";
-export const POLLY_ENGINE = getEnvValue("EXPO_PUBLIC_POLLY_ENGINE")?.trim() || "neural";
+export const POLLY_PROXY_URL = String(getEnvValue("EXPO_PUBLIC_POLLY_PROXY_URL") ?? "").trim();
+export const POLLY_VOICE_ID = String(getEnvValue("EXPO_PUBLIC_POLLY_VOICE_ID") ?? "").trim() || "Aditi";
+export const POLLY_ENGINE = String(getEnvValue("EXPO_PUBLIC_POLLY_ENGINE") ?? "").trim() || "neural";
 
 export function hasApiBaseUrl(): boolean {
   return API_BASE_URL.length > 0;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -25,6 +25,8 @@ export function ScreenContainer({
 
   const content = scrollable ? (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
       contentContainerStyle={[
         styles.scrollContent,
         { paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.xxl },
