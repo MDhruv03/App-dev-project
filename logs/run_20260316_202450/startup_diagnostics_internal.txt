@@ -1,9 +1,0 @@
-﻿adb.exe : adb.exe: more than one device/emulator
-At C:\Users\lkman\OneDrive\Desktop\APP 
-DEV\App-dev-project\tools\collect_android_logs.ps1:71 char:13
-+ $diagText = & $adbPath shell run-as $PackageName cat files/startup_di ...
-+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (adb.exe: more than one device/emu 
-   lator:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 

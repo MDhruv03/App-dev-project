@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "frontend-rn",
+    "slug": "frontend-rn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.madlab.frontendrn",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is used to keep your face framed during live interview practice.",
+        "NSMicrophoneUsageDescription": "Microphone access is used to record interview responses.",
+        "NSPhotoLibraryUsageDescription": "Photo library access may be used for profile and resume assets."
+      }
+    },
+    "android": {
+      "package": "com.madlab.frontendrn",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-av"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
