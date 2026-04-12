@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { PDFParse } from "pdf-parse";
 import { config } from "./config.js";
 import {
   hashPassword,
@@ -82,6 +83,83 @@ function clamp(value, min, max) {
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+async function callVisionValidationService(image) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), config.visionRequestTimeoutMs);
+
+  try {
+    const response = await fetch(config.visionServiceUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image }),
+      signal: controller.signal,
+    });
+
+    const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+    const payload = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      const message =
+        typeof payload === "object" && payload && "message" in payload
+          ? String(payload.message)
+          : typeof payload === "string" && payload.trim()
+          ? payload
+          : `Vision service request failed with status ${response.status}`;
+
+      throw new Error(message);
+    }
+
+    return payload;
+  } catch (error) {
+    if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
+      throw new Error("Vision service timeout.");
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function extractResumeTextFromUpload(payload) {
+  const fileName = String(payload?.fileName || "resume").trim();
+  const mimeType = String(payload?.mimeType || "").toLowerCase();
+  const fileBase64 = String(payload?.fileBase64 || "").trim();
+  const normalizedBase64 = fileBase64.includes(",") ? fileBase64.split(",").pop() || "" : fileBase64;
+
+  if (!normalizedBase64) {
+    throw new Error("fileBase64 is required");
+  }
+
+  const buffer = Buffer.from(normalizedBase64, "base64");
+  if (!buffer.length) {
+    throw new Error("Uploaded resume bytes are empty.");
+  }
+
+  const lowerName = fileName.toLowerCase();
+  const isPdf = mimeType.includes("pdf") || lowerName.endsWith(".pdf");
+
+  if (isPdf) {
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const parsed = await parser.getText();
+      return String(parsed?.text || "").trim();
+    } finally {
+      try {
+        await parser.destroy();
+      } catch {
+        // Best effort cleanup.
+      }
+    }
+  }
+
+  return buffer.toString("utf8").trim();
 }
 
 function getUserId(req) {
@@ -197,6 +275,22 @@ app.post("/auth/logout", requireAuth, (req, res) => {
 });
 
 app.use(requireAuth);
+
+app.post("/vision/validate", async (req, res) => {
+  const image = String(req.body?.image || "").trim();
+  if (!image) {
+    res.status(400).json({ message: "image is required" });
+    return;
+  }
+
+  try {
+    const payload = await callVisionValidationService(image);
+    res.json(payload);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Vision validation failed.";
+    res.status(502).json({ message });
+  }
+});
 
 app.get("/opportunities", (req, res) => {
   const state = loadUserState(req);
@@ -349,6 +443,24 @@ app.patch("/profile", (req, res, next) => {
       return;
     }
     next(error);
+  }
+});
+
+app.post("/profile/parse-resume", async (req, res) => {
+  try {
+    const text = await extractResumeTextFromUpload(req.body || {});
+    if (!text) {
+      res.status(422).json({ message: "Could not extract readable text from uploaded resume." });
+      return;
+    }
+
+    res.json({
+      text: text.slice(0, 220000),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Resume parsing failed.";
+    const status = message.includes("fileBase64") ? 400 : 422;
+    res.status(status).json({ message });
   }
 });
 

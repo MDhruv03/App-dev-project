@@ -29,6 +29,8 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN || "*",
   groqApiKey: process.env.GROQ_API_KEY || "",
   groqModel: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+  visionServiceUrl: process.env.VISION_SERVICE_URL || "http://localhost:5001/validate-face",
+  visionRequestTimeoutMs: Number(process.env.VISION_REQUEST_TIMEOUT_MS || 7000),
   pollyEnabled: parseBoolean(process.env.POLLY_ENABLED ?? process.env.EXPO_PUBLIC_POLLY_ENABLED ?? "false", false),
   pollyProxyUrl: process.env.POLLY_PROXY_URL || process.env.EXPO_PUBLIC_POLLY_PROXY_URL || "",
   pollyVoiceId: process.env.POLLY_VOICE_ID || process.env.EXPO_PUBLIC_POLLY_VOICE_ID || "Aditi",

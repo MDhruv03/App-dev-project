@@ -45,13 +45,32 @@ export function InterviewHeader({
         },
       ]}
     >
-      <View style={styles.left}>
-        <ThemedText variant="label" muted>
-          Live Interview
-        </ThemedText>
-        <ThemedText variant="title" strong style={{ marginTop: 3 }}>
-          Q{current}/{safeTotal}
-        </ThemedText>
+      <View style={styles.topRow}>
+        <View style={styles.left}>
+          <ThemedText variant="label" muted>
+            Live Interview
+          </ThemedText>
+          <ThemedText variant="title" strong style={{ marginTop: 3 }}>
+            Q{current}/{safeTotal}
+          </ThemedText>
+        </View>
+
+        <Pressable
+          onPress={onQuit}
+          disabled={disabled}
+          style={({ pressed }) => [
+            styles.quitButton,
+            {
+              borderColor: theme.colors.danger,
+              backgroundColor: theme.colors.cardAlt,
+              opacity: disabled ? 0.56 : pressed ? 0.84 : 1,
+            },
+          ]}
+        >
+          <ThemedText variant="body" strong style={{ color: theme.colors.danger }}>
+            End
+          </ThemedText>
+        </Pressable>
       </View>
 
       <View style={styles.metaRow}>
@@ -71,42 +90,31 @@ export function InterviewHeader({
           </ThemedText>
         </View>
       </View>
-
-      <Pressable
-        onPress={onQuit}
-        disabled={disabled}
-        style={({ pressed }) => [
-          styles.quitButton,
-          {
-            borderColor: theme.colors.danger,
-            backgroundColor: theme.colors.cardAlt,
-            opacity: disabled ? 0.56 : pressed ? 0.84 : 1,
-          },
-        ]}
-      >
-        <ThemedText variant="body" strong style={{ color: theme.colors.danger }}>
-          End
-        </ThemedText>
-      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
+    width: "100%",
     borderWidth: 1,
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    overflow: "hidden",
+  },
+  topRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     gap: 10,
   },
   left: {
-    minWidth: 80,
+    minWidth: 0,
+    flexShrink: 1,
   },
   metaRow: {
-    flex: 1,
+    marginTop: 10,
     flexDirection: "row",
     gap: 8,
     alignItems: "center",
@@ -120,7 +128,7 @@ const styles = StyleSheet.create({
   },
   quitButton: {
     minWidth: 72,
-    minHeight: 42,
+    minHeight: 40,
     borderWidth: 1,
     borderRadius: 12,
     alignItems: "center",

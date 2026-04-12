@@ -6,6 +6,7 @@ Unified backend for the React Native app and migrated Java feature logic.
 - Email/password signup + login with bearer sessions
 - User-specific state isolation (profile, coding, applications, interview, activity)
 - Interview evaluation endpoint with Groq AI + local fallback heuristics
+- Real-time vision validation proxy endpoint for interview camera checks
 - Coding profile sync (LeetCode + Codeforces) with resilient fallback
 - Opportunity feed ranking and personalization
 - Profile, applications, and activity persistence
@@ -77,6 +78,7 @@ npm run dev:raw
 
 ## Core Endpoints
 - `GET /health`
+- `POST /vision/validate`
 - `POST /auth/signup`
 - `POST /auth/login`
 - `GET /auth/me`
@@ -96,3 +98,4 @@ npm run dev:raw
 - Uses SQLite at `data/app.db` for persistence.
 - Reads `GROQ_API_KEY` and runtime settings from `frontend-rn/.env`.
 - Safe fallback logic keeps app functional if external APIs are unavailable.
+- Vision validation is proxied to `VISION_SERVICE_URL` (default: `http://localhost:5001/validate-face`).

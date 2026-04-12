@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
+  type AppStateStatus,
   Modal,
   Pressable,
   ScrollView,
@@ -12,6 +14,7 @@ import { Audio } from "expo-av";
 import { File } from "expo-file-system";
 import * as Speech from "expo-speech";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { GlassCard } from "../components/GlassCard";
 import { InterviewHeader } from "../components/InterviewHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -20,6 +23,7 @@ import { ScreenContainer } from "../components/ScreenContainer";
 import { ThemedText } from "../components/ThemedText";
 import { fetchInterviewReaction } from "../services/interviewService";
 import { synthesizePollySpeech } from "../services/pollyService";
+import { validateVisionFrame } from "../services/visionClient";
 import { useAppTheme } from "../theme/ThemeProvider";
 import {
   InterviewDifficulty,
@@ -37,12 +41,13 @@ const FOCUS_TOPICS: Array<InterviewTopic | "Mixed"> = [
   "Mixed", "DSA", "System Design", "Behavioral", "Domain",
 ];
 const QUESTION_COUNTS = [3, 5, 7];
-
-// ─── Note on face detection ────────────────────────────────────────────────────
-// expo-face-detector requires a custom native build and is NOT available in Expo Go.
-// Attempting to load it (even lazily) causes an uncatchable native bridge error in
-// some Expo SDK versions. Eye-contact tracking uses camera-presence signals instead:
-// a successful picture capture = person is in front of camera = presence confirmed.
+const HEARTBEAT_INTERVAL_MS = 3000;
+const FAILURE_DELTA = 18;
+const HEARTBEAT_ERROR_DECAY = 8;
+const LOW_SCORE_THRESHOLD = 30;
+const LOW_SCORE_MAX_MS = 10000;
+const SCORE_GREEN = 70;
+const SCORE_YELLOW = 40;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -148,7 +153,9 @@ export function InterviewScreen() {
 
   // ── Permissions & camera ──
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const canUseCamera = cameraPermission?.granted === true;
   const [audioPermission, setAudioPermission] = useState(false);
+  const [appStateStatus, setAppStateStatus] = useState<AppStateStatus>(AppState.currentState);
 
   // ── Recording ──
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -175,10 +182,13 @@ export function InterviewScreen() {
   const [latestImprovements, setLatestImprovements] = useState<string[]>([]);
   const [isEvaluating, setIsEvaluating] = useState(false);
 
-  // ── Eye tracking (presence-based, no native module) ──
+  // ── Eye tracking (real-time face validation) ──
   const [eyeScore, setEyeScore] = useState(0);
   const [eyeSamples, setEyeSamples] = useState(0);
   const [framingHint, setFramingHint] = useState("");
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraMountError, setCameraMountError] = useState<string | null>(null);
+  const [isIntegrityCompromised, setIsIntegrityCompromised] = useState(false);
 
   // ── Session timer ──
   const [sessionElapsedMs, setSessionElapsedMs] = useState(0);
@@ -193,16 +203,18 @@ export function InterviewScreen() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const cleanupRef = useRef<null | (() => Promise<void>)>(null);
   const hasGreetedRef = useRef(false);
-  const framingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const heartbeatBusyRef = useRef(false);
+  const lowScoreSinceRef = useRef<number | null>(null);
 
   // ── Derived ──
   const currentQuestion = interview.questions[interview.currentIndex];
   const currentHints = currentQuestion?.hints ?? [];
-  const canUseCamera = cameraPermission?.granted === true;
   const targetDurationSec = targetDurationForDifficulty(selectedDifficulty);
   const isLiveInterview = interview.active && !interview.completed;
   const shouldShowSetup = showSetupCard || (!interview.active && !interview.completed && interview.answers.length === 0);
+  const showCameraFeed = canUseCamera;
 
   const averageScore = useMemo(() => {
     if (interview.answers.length === 0) return 0;
@@ -215,13 +227,18 @@ export function InterviewScreen() {
     return m;
   }, [interview.questions]);
 
-  const eyeRingColor = eyeSamples === 0
-    ? "rgba(255,255,255,0.3)"
-    : eyeScore >= 70
-    ? "rgba(50,220,110,0.9)"
-    : eyeScore >= 40
-    ? "rgba(255,200,50,0.9)"
-    : "rgba(220,60,60,0.9)";
+  const eyeRingColor = eyeScore >= SCORE_GREEN
+    ? "rgba(50,220,110,0.92)"
+    : eyeScore >= SCORE_YELLOW
+    ? "rgba(255,200,50,0.92)"
+    : "rgba(220,60,60,0.92)";
+  const eyeConfidenceLabel = eyeScore >= 90
+    ? "excellent"
+    : eyeScore >= 60
+    ? "warning"
+    : eyeScore < SCORE_YELLOW
+    ? "poor framing"
+    : "monitoring";
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -229,8 +246,8 @@ export function InterviewScreen() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   };
 
-  const clearFramingTimer = () => {
-    if (framingIntervalRef.current) { clearInterval(framingIntervalRef.current); framingIntervalRef.current = null; }
+  const clearHeartbeatTimer = () => {
+    if (heartbeatTimerRef.current) { clearInterval(heartbeatTimerRef.current); heartbeatTimerRef.current = null; }
   };
 
   const resetAudioMode = async () => {
@@ -254,47 +271,154 @@ export function InterviewScreen() {
     } catch { /* ignore */ }
   };
 
-  // ─── Eye-contact / framing check (presence-based) ──────────────────────────
-  // No native face-detector is used. A successful camera capture confirms the
-  // user is present and facing the camera — score builds up over time.
+  // ─── Camera presence heartbeat validation (Expo Camera + AppState) ─────────
 
-  const runFramingCheck = async () => {
-    if (!canUseCamera || !cameraRef.current || busy || isSubmittingInterviewAnswer) return;
+  const applyScoreDelta = useCallback((delta: number, hint: string) => {
+    setEyeSamples((prev) => prev + 1);
+    setEyeScore((prev) => clampNumber(prev + delta, 0, 100));
+    setFramingHint(hint);
+  }, []);
 
-    const pushSample = (v: number) => {
-      const s = clampNumber(v, 0, 100);
-      setEyeSamples((p) => p + 1);
-      setEyeScore((p) => p <= 0 ? s : clampNumber(Math.round(p * 0.74 + s * 0.26), 0, 100));
-    };
+  const applyVisionScore = useCallback((score: number, hint: string) => {
+    setEyeSamples((prev) => prev + 1);
+    setEyeScore(clampNumber(Math.round(score), 0, 100));
+    setFramingHint(hint);
+  }, []);
 
-    try {
-      const capture = await cameraRef.current.takePictureAsync({ quality: 0.2, skipProcessing: true });
-      if (capture?.uri) {
-        pushSample(55);
-        setFramingHint("Camera active — keep face centred in the oval.");
-      } else {
-        pushSample(5);
-        setFramingHint("Could not capture frame — check lighting.");
-      }
-    } catch {
-      pushSample(5);
-      setFramingHint("Camera check failed.");
-    }
-  };
-
-  // ─── Auto eye-tracking during live session ───────────────────────────────────
-
-  useEffect(() => {
-    if (!isLiveInterview || !canUseCamera) {
-      clearFramingTimer();
+  const runPresenceHeartbeat = useCallback(async () => {
+    if (!isLiveInterview || !showCameraFeed || !cameraReady || cameraMountError) {
       return;
     }
-    // Run immediately, then every 3.5 s
-    void runFramingCheck();
-    framingIntervalRef.current = setInterval(() => void runFramingCheck(), 3500);
-    return () => clearFramingTimer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLiveInterview, canUseCamera]);
+
+    if (!isFocused || appStateStatus !== "active") {
+      return;
+    }
+
+    if (!cameraRef.current || heartbeatBusyRef.current) {
+      return;
+    }
+
+    heartbeatBusyRef.current = true;
+    try {
+      const snapshot = await cameraRef.current.takePictureAsync({
+        quality: 0.15,
+        skipProcessing: true,
+        base64: true,
+      });
+
+      const frameBase64 = String(snapshot.base64 || "");
+      if (!frameBase64) {
+        applyScoreDelta(-HEARTBEAT_ERROR_DECAY, "Camera frame missing. Hold steady in good light.");
+        return;
+      }
+
+      const vision = await validateVisionFrame(frameBase64);
+      const fallbackHint = vision.faceDetected
+        ? vision.eyeDetected
+          ? "Face centered and eyes visible"
+          : "Keep your face fully visible"
+        : "No face detected";
+
+      applyVisionScore(vision.score, String(vision.hint || fallbackHint));
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+      const hint = message.includes("blocked") ? "Camera blocked" : "Camera feed lost";
+      applyScoreDelta(-FAILURE_DELTA, hint);
+    } finally {
+      heartbeatBusyRef.current = false;
+    }
+  }, [appStateStatus, applyScoreDelta, applyVisionScore, cameraMountError, cameraReady, isFocused, isLiveInterview, showCameraFeed]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (nextState) => {
+      setAppStateStatus(nextState);
+      if (nextState !== "active" && isLiveInterview) {
+        clearHeartbeatTimer();
+        applyScoreDelta(-FAILURE_DELTA, "Stay on the interview screen");
+      }
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [applyScoreDelta, isLiveInterview]);
+
+  useEffect(() => {
+    if (!isLiveInterview) {
+      clearHeartbeatTimer();
+      lowScoreSinceRef.current = null;
+      setIsIntegrityCompromised(false);
+      return;
+    }
+
+    if (!canUseCamera) {
+      clearHeartbeatTimer();
+      setEyeScore(0);
+      setFramingHint("Camera permission is required.");
+      return;
+    }
+
+    if (cameraMountError) {
+      clearHeartbeatTimer();
+      setEyeScore(0);
+      setFramingHint("Camera unavailable");
+      return;
+    }
+
+    if (!cameraReady) {
+      clearHeartbeatTimer();
+      setFramingHint("Waiting for camera preview...");
+      return;
+    }
+
+    if (!isFocused || appStateStatus !== "active") {
+      clearHeartbeatTimer();
+      return;
+    }
+
+    void runPresenceHeartbeat();
+    clearHeartbeatTimer();
+    heartbeatTimerRef.current = setInterval(() => {
+      void runPresenceHeartbeat();
+    }, HEARTBEAT_INTERVAL_MS);
+
+    return () => {
+      clearHeartbeatTimer();
+    };
+  }, [appStateStatus, cameraMountError, cameraReady, canUseCamera, isFocused, isLiveInterview, runPresenceHeartbeat]);
+
+  useEffect(() => {
+    if (!isLiveInterview) {
+      lowScoreSinceRef.current = null;
+      setIsIntegrityCompromised(false);
+      return;
+    }
+
+    const ticker = setInterval(() => {
+      if (eyeScore < LOW_SCORE_THRESHOLD) {
+        if (lowScoreSinceRef.current == null) {
+          lowScoreSinceRef.current = Date.now();
+          return;
+        }
+
+        if (Date.now() - lowScoreSinceRef.current >= LOW_SCORE_MAX_MS) {
+          setIsIntegrityCompromised(true);
+          setFramingHint((prev) =>
+            prev === "Camera unavailable"
+              ? prev
+              : "Presence score too low. Re-center before submitting.",
+          );
+        }
+      } else {
+        lowScoreSinceRef.current = null;
+        setIsIntegrityCompromised(false);
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(ticker);
+    };
+  }, [eyeScore, isLiveInterview]);
 
   // ─── Session elapsed timer ───────────────────────────────────────────────────
 
@@ -310,17 +434,20 @@ export function InterviewScreen() {
 
   useEffect(() => {
     if (isFocused) return;
-    clearFramingTimer();
+    clearHeartbeatTimer();
     setIsSpeakingQuestion(false);
     void releaseAudio();
-  }, [isFocused]);
+    if (isLiveInterview) {
+      applyScoreDelta(-FAILURE_DELTA, "Stay on the interview screen");
+    }
+  }, [applyScoreDelta, isFocused, isLiveInterview]);
 
   // ─── Cleanup on unmount ──────────────────────────────────────────────────────
 
   useEffect(() => {
     return () => {
       clearRecordingTimer();
-      clearFramingTimer();
+      clearHeartbeatTimer();
       void releaseAudio();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -516,7 +643,11 @@ export function InterviewScreen() {
     setShowHistory(false);
     setEyeScore(0);
     setEyeSamples(0);
-    setFramingHint("");
+    setFramingHint("Waiting for camera preview...");
+    setCameraMountError(null);
+    setCameraReady(false);
+    lowScoreSinceRef.current = null;
+    setIsIntegrityCompromised(false);
     setSessionElapsedMs(0);
   };
 
@@ -535,6 +666,11 @@ export function InterviewScreen() {
     setLastClipUri("");
     setEyeScore(0);
     setEyeSamples(0);
+    setFramingHint("");
+    setCameraMountError(null);
+    setCameraReady(false);
+    lowScoreSinceRef.current = null;
+    setIsIntegrityCompromised(false);
   };
 
   const doEndEarly = async () => {
@@ -545,6 +681,10 @@ export function InterviewScreen() {
     setShowSetupCard(false);
     setIsSpeakingQuestion(false);
     setStatus("Interview ended. Review your feedback below.");
+    clearHeartbeatTimer();
+    setCameraReady(false);
+    lowScoreSinceRef.current = null;
+    setIsIntegrityCompromised(false);
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────────
@@ -552,29 +692,47 @@ export function InterviewScreen() {
   // LIVE interview — dedicated focused layout (not inside ScreenContainer)
   if (isLiveInterview) {
     return (
-      <View style={[styles.liveRoot, { backgroundColor: theme.colors.bgTop }]}>
-        {/* Header */}
-        <InterviewHeader
-          questionIndex={interview.currentIndex}
-          totalQuestions={interview.questions.length}
-          domain={interview.config.domain}
-          difficulty={interview.config.difficulty}
-          elapsedMs={sessionElapsedMs}
-          disabled={busy || isSubmittingInterviewAnswer}
-          onQuit={() => { if (!busy && !isSubmittingInterviewAnswer) setShowQuitConfirm(true); }}
-        />
+      <SafeAreaView style={[styles.liveSafeArea, { backgroundColor: theme.colors.bgTop }]} edges={["top", "left", "right"]}>
+        <View style={styles.liveRoot}>
+          {/* Header */}
+          <View style={styles.liveHeaderWrap}>
+            <InterviewHeader
+              questionIndex={interview.currentIndex}
+              totalQuestions={interview.questions.length}
+              domain={interview.config.domain}
+              difficulty={interview.config.difficulty}
+              elapsedMs={sessionElapsedMs}
+              disabled={busy || isSubmittingInterviewAnswer}
+              onQuit={() => { if (!busy && !isSubmittingInterviewAnswer) setShowQuitConfirm(true); }}
+            />
+          </View>
 
-        <ScrollView
-          style={styles.liveScroll}
-          contentContainerStyle={styles.liveScrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          <ScrollView
+            style={styles.liveScroll}
+            contentContainerStyle={styles.liveScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           {/* ── Camera block ── */}
           <View style={[styles.cameraBlock, { borderColor: theme.colors.border }]}>
-            {canUseCamera ? (
+            {showCameraFeed ? (
               <>
-                <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
+                <CameraView
+                  ref={cameraRef}
+                  style={StyleSheet.absoluteFill}
+                  facing="front"
+                  active={isFocused && isLiveInterview}
+                  onCameraReady={() => {
+                    setCameraReady(true);
+                    setCameraMountError(null);
+                  }}
+                  onMountError={(event) => {
+                    setCameraReady(false);
+                    setCameraMountError(event.message || "Camera unavailable");
+                    setEyeScore(0);
+                    setFramingHint("Camera unavailable");
+                  }}
+                />
 
                 {/* Oval guide ring — colour reflects eye-contact score */}
                 <View style={styles.ovalGuideWrap} pointerEvents="none">
@@ -587,8 +745,9 @@ export function InterviewScreen() {
                     backgroundColor: eyeSamples === 0 ? "#888" : eyeScore >= 70 ? "#3ddc84" : eyeScore >= 40 ? "#ffc832" : "#e05252",
                   }]} />
                   <ThemedText style={styles.eyeBadgeText}>
-                    {eyeSamples > 0 ? `${eyeScore}%` : "—"}
+                    {eyeSamples > 0 ? `${eyeScore}%` : "--"}
                   </ThemedText>
+                  <ThemedText style={styles.eyeBadgeLevel}>{eyeConfidenceLabel}</ThemedText>
                 </View>
 
                 {/* Recording badge */}
@@ -600,16 +759,18 @@ export function InterviewScreen() {
                 )}
 
                 {/* Framing hint overlay at bottom of camera */}
-                {!!framingHint && (
+                {!!(cameraMountError || framingHint) && (
                   <View style={styles.framingHintBar}>
-                    <ThemedText style={styles.framingHintText} numberOfLines={1}>{framingHint}</ThemedText>
+                    <ThemedText style={styles.framingHintText} numberOfLines={2}>
+                      {cameraMountError || framingHint}
+                    </ThemedText>
                   </View>
                 )}
               </>
             ) : (
               <View style={styles.cameraFallback}>
                 <ThemedText variant="body" muted style={{ textAlign: "center" }}>
-                  Camera off — enable it for eye tracking.
+                  Camera off — enable it for presence validation.
                 </ThemedText>
                 <PrimaryButton
                   label="Enable Camera"
@@ -633,7 +794,7 @@ export function InterviewScreen() {
                 </ThemedText>
               </View>
               {!!status && (
-                <ThemedText variant="body" muted style={{ flex: 1, marginLeft: 10 }} numberOfLines={1}>
+                <ThemedText variant="body" muted style={styles.questionStatus} numberOfLines={1}>
                   {status}
                 </ThemedText>
               )}
@@ -656,7 +817,7 @@ export function InterviewScreen() {
               {isSpeakingQuestion && (
                 <PrimaryButton
                   label="■  Stop"
-                  style={{ marginLeft: 10, minWidth: 80 }}
+                  style={{ minWidth: 80 }}
                   onPress={() => { void releaseAudio(); setIsSpeakingQuestion(false); setVoiceLabel(""); }}
                 />
               )}
@@ -722,11 +883,30 @@ export function InterviewScreen() {
 
             {/* Submit */}
             <PrimaryButton
-              label={isEvaluating || isSubmittingInterviewAnswer ? "Evaluating…" : "Submit & Evaluate"}
+              label={
+                isIntegrityCompromised
+                  ? "Validation Too Low"
+                  : isEvaluating || isSubmittingInterviewAnswer
+                  ? "Evaluating…"
+                  : "Submit & Evaluate"
+              }
               style={{ marginTop: 14 }}
-              disabled={busy || !!recording || !lastClipUri || isEvaluating || isSubmittingInterviewAnswer}
+              disabled={
+                busy ||
+                !!recording ||
+                !lastClipUri ||
+                isEvaluating ||
+                isSubmittingInterviewAnswer ||
+                isIntegrityCompromised
+              }
               onPress={evaluateAnswer}
             />
+
+            {isIntegrityCompromised && (
+              <ThemedText variant="body" style={{ marginTop: 8, color: theme.colors.danger }}>
+                Presence score has stayed below 30 for too long. Re-center and remain visible to continue.
+              </ThemedText>
+            )}
 
             {(isEvaluating || isSubmittingInterviewAnswer) && (
               <View style={styles.evalRow}>
@@ -737,18 +917,19 @@ export function InterviewScreen() {
               </View>
             )}
           </GlassCard>
-        </ScrollView>
+          </ScrollView>
 
-        {/* Quit modal */}
-        <QuitModal
-          visible={showQuitConfirm}
-          answeredCount={interview.answers.length}
-          totalCount={interview.questions.length}
-          onKeepGoing={() => setShowQuitConfirm(false)}
-          onEnd={() => void doEndEarly()}
-          theme={theme}
-        />
-      </View>
+          {/* Quit modal */}
+          <QuitModal
+            visible={showQuitConfirm}
+            answeredCount={interview.answers.length}
+            totalCount={interview.questions.length}
+            onKeepGoing={() => setShowQuitConfirm(false)}
+            onEnd={() => void doEndEarly()}
+            theme={theme}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -1035,13 +1216,23 @@ function QuitModal({
 
 const styles = StyleSheet.create({
   // Live layout
+  liveSafeArea: {
+    flex: 1,
+  },
   liveRoot: {
     flex: 1,
+    width: "100%",
+    overflow: "hidden",
+  },
+  liveHeaderWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
   },
   liveScroll: {
     flex: 1,
   },
   liveScrollContent: {
+    paddingTop: 4,
     paddingHorizontal: 16,
     paddingBottom: 32,
     gap: 12,
@@ -1087,6 +1278,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "700",
+  },
+  eyeBadgeLevel: {
+    color: "#d9d9d9",
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   recBadge: {
     position: "absolute",
@@ -1139,7 +1336,14 @@ const styles = StyleSheet.create({
   questionMeta: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
     marginBottom: 8,
+  },
+  questionStatus: {
+    marginLeft: 10,
+    flexShrink: 1,
+    minWidth: 0,
   },
   topicBadge: {
     borderRadius: 8,
@@ -1159,6 +1363,8 @@ const styles = StyleSheet.create({
   voiceRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 10,
   },
   hintToggle: {
     paddingVertical: 4,

@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import { File } from "expo-file-system";
 import { GlassCard } from "../components/GlassCard";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenContainer } from "../components/ScreenContainer";
@@ -7,6 +9,7 @@ import { ThemedText } from "../components/ThemedText";
 import { useAppTheme } from "../theme/ThemeProvider";
 import { useAppState } from "../state/AppState";
 import { useAuth } from "../state/AuthState";
+import { parseUploadedResume } from "../services/resumeService";
 
 const knownSkills = [
   "Kotlin",
@@ -31,6 +34,77 @@ const knownSkills = [
   "AWS",
 ];
 
+const knownRoles = [
+  "Software Engineer",
+  "SDE",
+  "Android Developer",
+  "Mobile Engineer",
+  "Frontend Engineer",
+  "Backend Engineer",
+  "Full Stack Engineer",
+  "Machine Learning Engineer",
+  "Data Scientist",
+  "DevOps Engineer",
+  "Platform Engineer",
+  "QA Engineer",
+  "Product Manager",
+];
+
+function normalizeResumeText(raw: string): string {
+  return raw
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inferMimeType(fileName: string): string {
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".txt")) return "text/plain";
+  if (lower.endsWith(".doc")) return "application/msword";
+  if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  return "application/octet-stream";
+}
+
+function extractNameCandidate(text: string): string {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+
+  const candidate = lines.find((line) => {
+    if (line.includes("@")) return false;
+    if (line.length < 5 || line.length > 50) return false;
+    return /^[A-Za-z][A-Za-z .'-]{3,}$/.test(line);
+  });
+
+  return candidate ?? "";
+}
+
+function extractResumeInfo(rawResume: string) {
+  const text = normalizeResumeText(rawResume);
+  const lower = text.toLowerCase();
+
+  const matchedSkills = Array.from(
+    new Set(knownSkills.filter((skill) => lower.includes(skill.toLowerCase()))),
+  );
+
+  const matchedRoles = Array.from(
+    new Set(knownRoles.filter((role) => lower.includes(role.toLowerCase()))),
+  );
+
+  const emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+
+  return {
+    normalizedText: text,
+    skills: matchedSkills,
+    roles: matchedRoles,
+    email: emailMatch?.[0] ?? "",
+    name: extractNameCandidate(rawResume),
+  };
+}
+
 export function ProfileScreen() {
   const { theme } = useAppTheme();
   const { profile, updateProfile } = useAppState();
@@ -41,7 +115,12 @@ export function ProfileScreen() {
   const [roles, setRoles] = useState(profile.roles);
   const [status, setStatus] = useState("Unsaved changes");
   const [resumeText, setResumeText] = useState("");
+  const [resumeSource, setResumeSource] = useState("pasted text");
+  const [isParsingUpload, setIsParsingUpload] = useState(false);
   const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
+  const [extractedRoles, setExtractedRoles] = useState<string[]>([]);
+  const [extractedName, setExtractedName] = useState("");
+  const [extractedEmail, setExtractedEmail] = useState("");
 
   useEffect(() => {
     setName(profile.name);
@@ -80,18 +159,78 @@ export function ProfileScreen() {
     setSkills(next.join(", "));
   };
 
-  const parseResumeSkills = () => {
-    const text = resumeText.toLowerCase();
-    const matches = knownSkills.filter((skill) => text.includes(skill.toLowerCase()));
-    const deduped = Array.from(new Set(matches));
-    setExtractedSkills(deduped);
+  const parseResumeContent = (content: string, sourceLabel: string) => {
+    const extracted = extractResumeInfo(content);
 
-    if (deduped.length === 0) {
-      setStatus("No known skills detected from pasted resume text.");
+    setResumeText(extracted.normalizedText);
+    setResumeSource(sourceLabel);
+    setExtractedSkills(extracted.skills);
+    setExtractedRoles(extracted.roles);
+    setExtractedName(extracted.name);
+    setExtractedEmail(extracted.email);
+
+    if (extracted.skills.length === 0 && extracted.roles.length === 0 && !extracted.email) {
+      setStatus(`Parsed ${sourceLabel}, but no strong profile signals were found.`);
       return;
     }
 
-    setStatus(`Detected ${deduped.length} skills from resume text.`);
+    setStatus(
+      `Parsed ${sourceLabel}: ${extracted.skills.length} skills, ${extracted.roles.length} roles${
+        extracted.email ? ", email found" : ""
+      }.`,
+    );
+  };
+
+  const parseResumeSkills = () => {
+    if (!resumeText.trim()) {
+      setStatus("Paste resume text or upload a resume file first.");
+      return;
+    }
+    parseResumeContent(resumeText, "pasted text");
+  };
+
+  const parseResumeFromUpload = async () => {
+    try {
+      setIsParsingUpload(true);
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+        multiple: false,
+        type: ["text/*", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+      });
+
+      if (result.canceled) {
+        setStatus("Resume upload cancelled.");
+        return;
+      }
+
+      const picked = result.assets[0];
+      const fileBase64 = await new File(picked.uri).base64();
+      const fileName = picked.name || "uploaded-resume";
+      const mimeType = picked.mimeType || inferMimeType(fileName);
+
+      if (!fileBase64.trim()) {
+        setStatus("Could not read uploaded file bytes. Try another file.");
+        return;
+      }
+
+      const parsed = await parseUploadedResume({
+        fileName,
+        mimeType,
+        fileBase64,
+      });
+
+      if (!parsed.text.trim()) {
+        setStatus("Uploaded resume was parsed, but no readable text was extracted.");
+        return;
+      }
+
+      parseResumeContent(parsed.text, fileName);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      setStatus(`Could not parse uploaded resume: ${message}`);
+    } finally {
+      setIsParsingUpload(false);
+    }
   };
 
   const applyExtractedSkills = () => {
@@ -102,6 +241,30 @@ export function ProfileScreen() {
 
     mergeSkills(extractedSkills);
     setStatus("Extracted skills merged into profile skills field.");
+  };
+
+  const applyExtractedProfileInfo = () => {
+    if (!extractedName && !extractedEmail && extractedRoles.length === 0) {
+      setStatus("No extracted name/email/roles to apply yet.");
+      return;
+    }
+
+    if (extractedName) {
+      setName(extractedName);
+    }
+    if (extractedEmail) {
+      setEmail(extractedEmail);
+    }
+    if (extractedRoles.length > 0) {
+      const currentRoles = roles
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+      const mergedRoles = Array.from(new Set([...currentRoles, ...extractedRoles]));
+      setRoles(mergedRoles.join(", "));
+    }
+
+    setStatus("Extracted profile info applied to form fields.");
   };
 
   return (
@@ -240,7 +403,22 @@ export function ProfileScreen() {
           Resume
         </ThemedText>
         <ThemedText variant="body" muted style={{ marginTop: 8 }}>
-          Paste resume text to extract skills and merge into your profile.
+          Upload a resume file or paste resume text to extract skills and profile details.
+        </ThemedText>
+
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+          <PrimaryButton
+            label={isParsingUpload ? "Uploading..." : "Upload & Parse Resume"}
+            style={{ flex: 1 }}
+            disabled={isParsingUpload}
+            onPress={() => {
+              void parseResumeFromUpload();
+            }}
+          />
+        </View>
+
+        <ThemedText variant="label" muted style={{ marginTop: 8 }}>
+          Source: {resumeSource}
         </ThemedText>
 
         <TextInput
@@ -262,6 +440,24 @@ export function ProfileScreen() {
         <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
           <PrimaryButton label="Parse Skills" style={{ flex: 1 }} onPress={parseResumeSkills} />
           <PrimaryButton label="Apply Skills" secondary style={{ flex: 1 }} onPress={applyExtractedSkills} />
+        </View>
+
+        <PrimaryButton
+          label="Apply Extracted Profile Info"
+          secondary
+          style={{ marginTop: 10 }}
+          onPress={applyExtractedProfileInfo}
+        />
+
+        <View style={{ marginTop: 12, gap: 6 }}>
+          <ThemedText variant="label" muted>Extracted Name</ThemedText>
+          <ThemedText variant="body" muted>{extractedName || "Not detected"}</ThemedText>
+          <ThemedText variant="label" muted style={{ marginTop: 6 }}>Extracted Email</ThemedText>
+          <ThemedText variant="body" muted>{extractedEmail || "Not detected"}</ThemedText>
+          <ThemedText variant="label" muted style={{ marginTop: 6 }}>Extracted Roles</ThemedText>
+          <ThemedText variant="body" muted>
+            {extractedRoles.length > 0 ? extractedRoles.join(", ") : "No roles detected"}
+          </ThemedText>
         </View>
 
         <View style={{ marginTop: 10, gap: 6 }}>

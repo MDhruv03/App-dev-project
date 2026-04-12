@@ -61,7 +61,11 @@ Android application, opportunity recommendation, AI interview preparation, MVVM,
 
 In current student and entry-level job ecosystems, internship and job opportunities are distributed across many websites and social channels. Users typically face three disconnected workflows:
 
-Discovering relevant opportunities. Tracking applications and deadlines. Preparing for interviews.
+\begin{itemize}
+  \item Discovering relevant opportunities.
+  \item Tracking applications and deadlines.
+  \item Preparing for interviews.
+\end{itemize}
 
 When these workflows are not unified, users often lose momentum, miss deadlines, or prepare inconsistently for technical and behavioral interviews. Existing platforms may be strong in one area (for example, listings or coding practice), but they rarely provide an integrated end-to-end experience optimized for mobile usage.
 
@@ -71,7 +75,12 @@ OpportunityHub addresses this gap by combining opportunity discovery, recommenda
 
 The reviewed ecosystem reveals a practical integration gap:
 
-Opportunity platforms focus on listing and search but provide limited structured application tracking. Tracking tools generally do not include intelligent recommendation or profile-aware ranking. Interview preparation tools are detached from actual application pipeline state. Many solutions do not provide robust offline-first behavior for unstable connectivity.
+\begin{itemize}
+  \item Opportunity platforms focus on listing and search but provide limited structured application tracking.
+  \item Tracking tools generally do not include intelligent recommendation or profile-aware ranking.
+  \item Interview preparation tools are detached from actual application pipeline state.
+  \item Many solutions do not provide robust offline-first behavior for unstable connectivity.
+\end{itemize}
 
 \subsection{Research Question}
 
@@ -79,17 +88,41 @@ How can an Android application integrate opportunity discovery, recommendation, 
 
 \subsection{Research Objectives}
 
-Build a unified mobile workflow for discovering, saving, applying, and tracking opportunities. Design and implement a profile-aware recommendation mechanism for ranking opportunities. Provide interview preparation through question banks, answer evaluation, readiness metrics, and live interview simulation. Support reliability through local persistence, background synchronization, and fallback mechanisms. Provide analytics and export features for user decision support.
+\begin{itemize}
+  \item Build a unified mobile workflow for discovering, saving, applying, and tracking opportunities.
+  \item Design and implement a profile-aware recommendation mechanism for ranking opportunities.
+  \item Provide interview preparation through question banks, answer evaluation, readiness metrics, and live interview simulation.
+  \item Support reliability through local persistence, background synchronization, and fallback mechanisms.
+  \item Provide analytics and export features for user decision support.
+\end{itemize}
 
 \subsection{Research Contribution}
 
 This work contributes an integrated, production-style Android architecture that combines:
 
-Multi-factor opportunity recommendation. Offline-first data handling with queued sync operations. AI-assisted and local fallback interview evaluation. Live voice interview interaction with speech and optional Polly-based synthesis. Application analytics and CSV export for user-level review.
+\begin{itemize}
+  \item Multi-factor opportunity recommendation.
+  \item Offline-first data handling with queued sync operations.
+  \item AI-assisted and local fallback interview evaluation.
+  \item Live voice interview interaction with speech and optional Polly-based synthesis.
+  \item Application analytics and CSV export for user-level review.
+\end{itemize}
 
 \subsection{Paper Roadmap}
 
-Section 2 reviews related work and articulates the research gap. Section 3 defines objectives. Section 4 explains design and methodology. Section 5 discusses societal and environmental contribution. Section 6 presents advanced concepts used. Section 7 reports results and discussion. Section 8 concludes. Section 9 states limitations. Section 10 outlines future scope. Section 11 lists references. Section 12 provides author details.
+\begin{itemize}
+  \item Section 2 reviews related work and articulates the research gap.
+  \item Section 3 defines objectives.
+  \item Section 4 explains design and methodology.
+  \item Section 5 discusses societal and environmental contribution.
+  \item Section 6 presents advanced concepts used.
+  \item Section 7 reports results and discussion.
+  \item Section 8 concludes.
+  \item Section 9 states limitations.
+  \item Section 10 outlines future scope.
+  \item Section 11 lists references.
+  \item Section 12 provides author details.
+\end{itemize}
 
 \section{Literature Survey}
 
@@ -193,25 +226,54 @@ End-to-end mobile workflow from discovery to interview readiness & \symcell{\xma
 
 The survey indicates multiple unresolved gaps:
 
-\textbf{Methodological Gap:} Existing tools optimize isolated modules (listings, tracking, or interview prep), not a complete pipeline. \textbf{Practical-Knowledge Gap:} Users need one mobile workflow that transitions from discovery to interview execution without context switching. \textbf{Evidence Gap:} Offline-first behavior with queue-based sync and retry strategies is underemphasized in student career tools. \textbf{Usability Gap:} Voice-interactive interview rehearsal with fallback behavior is uncommon in mainstream student-focused apps.
+\begin{itemize}
+  \item \textbf{Methodological Gap:} Existing tools optimize isolated modules (listings, tracking, or interview prep), not a complete pipeline.
+  \item \textbf{Practical-Knowledge Gap:} Users need one mobile workflow that transitions from discovery to interview execution without context switching.
+  \item \textbf{Evidence Gap:} Offline-first behavior with queue-based sync and retry strategies is underemphasized in student career tools.
+  \item \textbf{Usability Gap:} Voice-interactive interview rehearsal with fallback behavior is uncommon in mainstream student-focused apps.
+\end{itemize}
 
 This project addresses these gaps through a unified architecture and implementation that connects all stages in one application lifecycle.
 
 \section{Objective}
 
-Develop an Android platform that centralizes internships, jobs, and hackathons. Rank opportunities using profile-aware recommendation scoring. Provide searchable and filterable lists with save/apply actions. Track application statuses across pipeline states (saved, applied, interview, rejected, accepted). Build an AI interview module with domain selection, scoring, and readiness tracking. Provide a live interview mode with speech recognition, speaking pace estimation, follow-up prompts, and interviewer voice output. Ensure reliability with Room persistence, periodic workers, and pending sync operation retry logic. Provide analytics and export capabilities for user review.
+\begin{itemize}
+  \item Develop an Android platform that centralizes internships, jobs, and hackathons.
+  \item Rank opportunities using profile-aware recommendation scoring.
+  \item Provide searchable and filterable lists with save/apply actions.
+  \item Track application statuses across pipeline states (saved, applied, interview, rejected, accepted).
+  \item Build an AI interview module with domain selection, scoring, and readiness tracking.
+  \item Provide a live interview mode with speech recognition, speaking pace estimation, follow-up prompts, and interviewer voice output.
+  \item Ensure reliability with Room persistence, periodic workers, and pending sync operation retry logic.
+  \item Provide analytics and export capabilities for user review.
+\end{itemize}
 
 \section{Design And Methodology}
 
 \subsection{Software Requirements (SR)}
 
-Android Studio and Gradle-based Android build pipeline. Java 17 and Kotlin interoperability. Android SDK (minSdk 24, target/compile SDK configured in project). Room database for local persistence. Retrofit and OkHttp for API integration. WorkManager for periodic sync and notifications. Compose + Material 3 UI components. CameraX and Android Speech APIs for live interview mode.
+\begin{itemize}
+  \item Android Studio and Gradle-based Android build pipeline.
+  \item Java 17 and Kotlin interoperability.
+  \item Android SDK (minSdk 24, target/compile SDK configured in project).
+  \item Room database for local persistence.
+  \item Retrofit and OkHttp for API integration.
+  \item WorkManager for periodic sync and notifications.
+  \item Compose + Material 3 UI components.
+  \item CameraX and Android Speech APIs for live interview mode.
+\end{itemize}
 
 \subsection{System Architecture}
 
 The project follows MVVM with a repository abstraction:
 
-\textbf{View Layer:} Compose-based activities/fragments for Home, Saved, Tracker, AI Interview, Roadmap, Analytics, and Profile. \textbf{ViewModel Layer:} State management, filtering, scoring injection, and UI orchestration. \textbf{Repository Layer:} Network-first retrieval with local fallback, write-through updates, and merge logic. \textbf{Persistence Layer:} Room entities for opportunities, applications, interview data, user profile, and pending sync operations. \textbf{Worker Layer:} Periodic sync, daily recommendation notifications, and deadline reminders.
+\begin{itemize}
+  \item \textbf{View Layer:} Compose-based activities/fragments for Home, Saved, Tracker, AI Interview, Roadmap, Analytics, and Profile.
+  \item \textbf{ViewModel Layer:} State management, filtering, scoring injection, and UI orchestration.
+  \item \textbf{Repository Layer:} Network-first retrieval with local fallback, write-through updates, and merge logic.
+  \item \textbf{Persistence Layer:} Room entities for opportunities, applications, interview data, user profile, and pending sync operations.
+  \item \textbf{Worker Layer:} Periodic sync, daily recommendation notifications, and deadline reminders.
+\end{itemize}
 
 \subsection{Dataset and Data Generation Strategy}
 
@@ -221,25 +283,51 @@ Opportunity generation supports a curated+randomized pool, including internships
 
 Recommendation combines multiple weighted signals:
 
-Role/type match. Location match. Paid preference match. Skill matches. Remote preference. Deadline proximity (in preference-mode path).
+\begin{itemize}
+  \item Role/type match.
+  \item Location match.
+  \item Paid preference match.
+  \item Skill matches.
+  \item Remote preference.
+  \item Deadline proximity (in preference-mode path).
+\end{itemize}
 
 Score-derived outputs:
 
-Recommendation ranking values stored per opportunity. Match percentage injected for UI display. Top-N selection used for recommended sections and notifications.
+\begin{itemize}
+  \item Recommendation ranking values stored per opportunity.
+  \item Match percentage injected for UI display.
+  \item Top-N selection used for recommended sections and notifications.
+\end{itemize}
 
 \subsection{Interview Evaluation Methodology}
 
 The interview pipeline supports two evaluation modes:
 
-\textbf{AI Evaluation Mode:} Uses remote evaluation client for score, feedback, strengths, improvements, and verdict. \textbf{Local Fallback Mode:} Keyword overlap and answer quality heuristics when AI evaluation is unavailable.
+\begin{itemize}
+  \item \textbf{AI Evaluation Mode:} Uses remote evaluation client for score, feedback, strengths, improvements, and verdict.
+  \item \textbf{Local Fallback Mode:} Keyword overlap and answer quality heuristics when AI evaluation is unavailable.
+\end{itemize}
 
 Live interview mode includes:
 
-Speech recognition with partial/final transcript handling. Non-answer retry strategy with controlled thresholds. Follow-up question generation when response depth is insufficient. Speaking pace estimate using words-per-minute. Voice output using Polly proxy when configured, with automatic TTS fallback.
+\begin{itemize}
+  \item Speech recognition with partial/final transcript handling.
+  \item Non-answer retry strategy with controlled thresholds.
+  \item Follow-up question generation when response depth is insufficient.
+  \item Speaking pace estimate using words-per-minute.
+  \item Voice output using Polly proxy when configured, with automatic TTS fallback.
+\end{itemize}
 
 \subsection{Offline Sync and Reliability Methodology}
 
-Application writes are attempted online first when possible. On offline/error conditions, writes persist locally and enqueue pending operations. Pending operations maintain retry metadata and error context. Background sync attempts replay operations in batches and removes successful entries. Sync workers and task schedulers provide periodic recovery.
+\begin{itemize}
+  \item Application writes are attempted online first when possible.
+  \item On offline/error conditions, writes persist locally and enqueue pending operations.
+  \item Pending operations maintain retry metadata and error context.
+  \item Background sync attempts replay operations in batches and removes successful entries.
+  \item Sync workers and task schedulers provide periodic recovery.
+\end{itemize}
 
 \subsection{High-Level Algorithmic Pseudocode}
 
@@ -396,7 +484,13 @@ Opportunity discovery is already backed by a real public HTTP endpoint (Remotive
 
 \section{Contribution Towards The Society And Environment}
 
-\textbf{Career Accessibility:} Consolidates fragmented workflows, reducing cognitive and time burden for students and early professionals. \textbf{Skill Development:} Encourages structured interview practice with actionable feedback loops. \textbf{Inclusion Through Mobile-first Design:} Supports day-to-day use on common Android devices and intermittent connectivity. \textbf{Reduced Operational Waste:} Digital application tracking and reminders reduce dependence on ad-hoc manual note-taking and repeated effort. \textbf{Scalable Educational Utility:} The architecture can be reused in placement cells and institutional career support ecosystems.
+\begin{itemize}
+  \item \textbf{Career Accessibility:} Consolidates fragmented workflows, reducing cognitive and time burden for students and early professionals.
+  \item \textbf{Skill Development:} Encourages structured interview practice with actionable feedback loops.
+  \item \textbf{Inclusion Through Mobile-first Design:} Supports day-to-day use on common Android devices and intermittent connectivity.
+  \item \textbf{Reduced Operational Waste:} Digital application tracking and reminders reduce dependence on ad-hoc manual note-taking and repeated effort.
+  \item \textbf{Scalable Educational Utility:} The architecture can be reused in placement cells and institutional career support ecosystems.
+\end{itemize}
 
 \subsection{Low-Level Design (LLD)}
 
@@ -431,11 +525,28 @@ Opportunity discovery is already backed by a real public HTTP endpoint (Remotive
 
 The application follows a layered pattern:
 
-\textbf{Presentation Layer:} Compose screens for main workflows and interactions. \textbf{Domain/Logic Layer:} Recommendation and interview logic components. \textbf{Data Layer:} Repositories coordinating local+remote data strategy. \textbf{Persistence and Sync Layer:} Room entities, pending operation queues, periodic workers. \textbf{Device Integration Layer:} Speech recognition, TextToSpeech, CameraX, notification channels.
+\begin{itemize}
+  \item \textbf{Presentation Layer:} Compose screens for main workflows and interactions.
+  \item \textbf{Domain/Logic Layer:} Recommendation and interview logic components.
+  \item \textbf{Data Layer:} Repositories coordinating local+remote data strategy.
+  \item \textbf{Persistence and Sync Layer:} Room entities, pending operation queues, periodic workers.
+  \item \textbf{Device Integration Layer:} Speech recognition, TextToSpeech, CameraX, notification channels.
+\end{itemize}
 
 \section{Use Of Advanced Concepts}
 
-MVVM architecture with reactive LiveData state propagation. Compose Material 3 UI with multi-screen state handling. Offline-first synchronization through queued pending operations and retry policies. WorkManager periodic jobs for sync and recommendations. Multi-factor recommendation and profile-aware scoring. Local and AI hybrid interview evaluation strategy. Live interview voice loop combining STT, adaptive prompting, and TTS/Polly output. CSV export for analytics portability. CameraX integration for real-time interview preview. SharedPreferences-driven personalization (theme, roadmap completion).
+\begin{itemize}
+  \item MVVM architecture with reactive LiveData state propagation.
+  \item Compose Material 3 UI with multi-screen state handling.
+  \item Offline-first synchronization through queued pending operations and retry policies.
+  \item WorkManager periodic jobs for sync and recommendations.
+  \item Multi-factor recommendation and profile-aware scoring.
+  \item Local and AI hybrid interview evaluation strategy.
+  \item Live interview voice loop combining STT, adaptive prompting, and TTS/Polly output.
+  \item CSV export for analytics portability.
+  \item CameraX integration for real-time interview preview.
+  \item SharedPreferences-driven personalization (theme, roadmap completion).
+\end{itemize}
 
 \section{Results And Discussions}
 
@@ -443,10 +554,11 @@ MVVM architecture with reactive LiveData state propagation. Compose Material 3 U
 
 Table 1 summarizes feature-level implementation outcomes.
 
-{\footnotesize
+\begin{table*}[!tb]
+\centering
 \setlength{\tabcolsep}{4pt}
-\begin{center}
-\begin{tabularx}{\columnwidth}{|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
+\normalsize
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
 \hline
  \textbf{Feature Area} & \textbf{Implemented Outcome} \\
 \hline
@@ -469,12 +581,17 @@ Table 1 summarizes feature-level implementation outcomes.
  Background automation & 15-minute sync worker + daily recommendation and deadline reminder workers \\
 \hline
 \end{tabularx}
-\end{center}
-}
+\end{table*}
 
 \subsection{Observed Quantitative/Configuration Evidence}
 
-Recommendation output supports top-ranked subsets for UI and notifications. Local fallback seeding inserts 60 opportunities when no cache exists. Live interview plan uses a multi-turn structure (intro, technical set, probe, behavioral, closing). Sync system includes pending operation batching and retry control. Unit-test files exist for sync helper logic (application/opportunity/interview merge helpers).
+\begin{itemize}
+  \item Recommendation output supports top-ranked subsets for UI and notifications.
+  \item Local fallback seeding inserts 60 opportunities when no cache exists.
+  \item Live interview plan uses a multi-turn structure (intro, technical set, probe, behavioral, closing).
+  \item Sync system includes pending operation batching and retry control.
+  \item Unit-test files exist for sync helper logic (application/opportunity/interview merge helpers).
+\end{itemize}
 
 \subsection{Build and Validation Discussion}
 
@@ -490,13 +607,28 @@ OpportunityHub presents a comprehensive Android solution for opportunity lifecyc
 
 \section{Study Limitations}
 
-Build reproducibility currently depends on correcting machine-specific local SDK/JDK paths. Resume parsing from raw PDF bytes is keyword-based and may miss structured PDF semantics. Some data flows still rely on mock API service behavior and need production API hardening. Default single-user assumptions (for example, fixed mock user ID) limit multi-user realism. Full-scale instrumented testing on diverse devices/emulators was constrained by environment configuration.
+\begin{itemize}
+  \item Build reproducibility currently depends on correcting machine-specific local SDK/JDK paths.
+  \item Resume parsing from raw PDF bytes is keyword-based and may miss structured PDF semantics.
+  \item Some data flows still rely on mock API service behavior and need production API hardening.
+  \item Default single-user assumptions (for example, fixed mock user ID) limit multi-user realism.
+  \item Full-scale instrumented testing on diverse devices/emulators was constrained by environment configuration.
+\end{itemize}
 
 \section{Future Scope}
 
-Integrate production opportunity APIs and authenticated user accounts. Add stronger resume parsing using robust document parsing pipelines. Extend recommendation with learning-to-rank, implicit feedback, and temporal modeling. Add richer interview analytics (topic weakness trajectories, confidence bands, adaptive sequencing). Expand roadmap generation with milestone deadlines and mentor feedback loops. Add CI/CD pipeline for automated unit/instrumented test execution. Improve privacy/security with encrypted local storage and finer-grained sync conflict strategies.
+\begin{itemize}
+  \item Integrate production opportunity APIs and authenticated user accounts.
+  \item Add stronger resume parsing using robust document parsing pipelines.
+  \item Extend recommendation with learning-to-rank, implicit feedback, and temporal modeling.
+  \item Add richer interview analytics (topic weakness trajectories, confidence bands, adaptive sequencing).
+  \item Expand roadmap generation with milestone deadlines and mentor feedback loops.
+  \item Add CI/CD pipeline for automated unit/instrumented test execution.
+  \item Improve privacy/security with encrypted local storage and finer-grained sync conflict strategies.
+\end{itemize}
 
-\clearpage
+\FloatBarrier
+\IEEEtriggeratref{19}
 \begin{thebibliography}{99}
 \small
 \setlength{\itemsep}{0pt}

@@ -122,6 +122,9 @@ Expected endpoints:
 - `POST /interview/evaluate`
   - request: `{ domain, difficulty, prompt, durationSec, audioUri }`
   - response: `{ score, feedback, rubric, strengths, improvements }`
+- `POST /vision/validate`
+  - request: `{ image }`
+  - response: `{ faceDetected, faceCount, eyeDetected, score, hint }`
 - `POST /opportunities/feed`
   - request: `{ skills }`
   - response: `OpportunityRecord[]`

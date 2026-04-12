@@ -98,3 +98,7 @@ Thumbs.db
 *~
 *.swp
 *.bak
+
+# Python vision service runtime artifacts
+vision-python-service/__pycache__/
+vision-python-service/*.task
